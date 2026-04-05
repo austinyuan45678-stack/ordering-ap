@@ -45,6 +45,8 @@ export default function AdminPage() {
 
   const [newOrderNotification, setNewOrderNotification] = useState<{show: boolean, name: string}>({show: false, name: ""});
 
+  const [supportPhone, setSupportPhone] = useState("");
+
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "ADMIN") {
@@ -71,6 +73,8 @@ export default function AdminPage() {
   useEffect(() => {
     if (session?.user.role === "ADMIN") {
       fetchData();
+      const phone = localStorage.getItem("support_phone");
+      if (phone) setSupportPhone(phone);
     }
   }, [activeTab, session]);
 
@@ -320,6 +324,11 @@ export default function AdminPage() {
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       alert(error.message);
     }
+  };
+
+  const handleSaveSupportPhone = () => {
+    localStorage.setItem("support_phone", supportPhone);
+    alert(t("admin.addSuccess"));
   };
 
   const adminChangePassword = async (userId: string) => {
@@ -712,33 +721,52 @@ export default function AdminPage() {
       )}
 
       {activeTab === "stats" && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-bold mb-6">{t("account.stats")}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-              <p className="text-sm text-blue-600 font-semibold mb-1">总订单数 (Total Orders)</p>
-              <p className="text-3xl font-bold">{orders.length}</p>
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-xl font-bold mb-6">{t("admin.contactInfo")}</h2>
+            <div className="flex gap-4 max-w-sm">
+              <input 
+                type="tel" 
+                value={supportPhone} 
+                onChange={e => setSupportPhone(e.target.value)} 
+                placeholder="Ex: 18529510460"
+                className="flex-1 px-3 py-2 border rounded-md"
+              />
+              <button onClick={handleSaveSupportPhone} className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                {t("admin.save")}
+              </button>
             </div>
-            <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
-              <p className="text-sm text-green-600 font-semibold mb-1">总收入 ({currency})</p>
-              <p className="text-3xl font-bold">{formatPrice(orders.filter(o => o.status === "COMPLETED").reduce((sum, o) => sum + o.totalAmount, 0))}</p>
-              <p className="text-xs text-green-700 mt-1">*仅计算已完成的订单</p>
-            </div>
-            <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
-              <p className="text-sm text-yellow-600 font-semibold mb-1">待处理订单</p>
-              <p className="text-3xl font-bold">{orders.filter(o => o.status === "PENDING").length}</p>
-            </div>
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-              <p className="text-sm text-blue-600 font-semibold mb-1">处理中订单</p>
-              <p className="text-3xl font-bold">{orders.filter(o => o.status === "PROCESSING").length}</p>
-            </div>
-            <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
-              <p className="text-sm text-purple-600 font-semibold mb-1">已完成订单</p>
-              <p className="text-3xl font-bold">{orders.filter(o => o.status === "COMPLETED").length}</p>
-            </div>
-            <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
-              <p className="text-sm text-red-600 font-semibold mb-1">已取消订单</p>
-              <p className="text-3xl font-bold">{orders.filter(o => o.status === "CANCELLED").length}</p>
+            <p className="text-xs text-gray-500 mt-2">此号码将显示在普通用户的账号页面，方便他们联系客服。</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-xl font-bold mb-6">{t("account.stats")}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                <p className="text-sm text-blue-600 font-semibold mb-1">总订单数 (Total Orders)</p>
+                <p className="text-3xl font-bold">{orders.length}</p>
+              </div>
+              <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
+                <p className="text-sm text-green-600 font-semibold mb-1">总收入 ({currency})</p>
+                <p className="text-3xl font-bold">{formatPrice(orders.filter(o => o.status === "COMPLETED").reduce((sum, o) => sum + o.totalAmount, 0))}</p>
+                <p className="text-xs text-green-700 mt-1">*仅计算已完成的订单</p>
+              </div>
+              <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
+                <p className="text-sm text-yellow-600 font-semibold mb-1">待处理订单</p>
+                <p className="text-3xl font-bold">{orders.filter(o => o.status === "PENDING").length}</p>
+              </div>
+              <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                <p className="text-sm text-blue-600 font-semibold mb-1">处理中订单</p>
+                <p className="text-3xl font-bold">{orders.filter(o => o.status === "PROCESSING").length}</p>
+              </div>
+              <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
+                <p className="text-sm text-purple-600 font-semibold mb-1">已完成订单</p>
+                <p className="text-3xl font-bold">{orders.filter(o => o.status === "COMPLETED").length}</p>
+              </div>
+              <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+                <p className="text-sm text-red-600 font-semibold mb-1">已取消订单</p>
+                <p className="text-3xl font-bold">{orders.filter(o => o.status === "CANCELLED").length}</p>
+              </div>
             </div>
           </div>
         </div>
