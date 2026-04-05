@@ -96,6 +96,63 @@ export default function AdminPage() {
     }
   };
 
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let imageUrl = "";
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          const errText = await uploadRes.text();
+          throw new Error(`Upload failed: ${errText}`);
+        }
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.url;
+      }
+
+      const finalPrice = currency === "VND" ? parseFloat(price) / exchangeRate : parseFloat(price);
+
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          nameVi,
+          description,
+          descriptionVi,
+          price: finalPrice,
+          stock: stock ? parseInt(stock) : 999,
+          unit,
+          imageUrl,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to add product");
+
+      setName("");
+      setNameVi("");
+      setDescription("");
+      setDescriptionVi("");
+      setPrice("");
+      setStock("");
+      setUnit("个/Cái");
+      setFile(null);
+      fetchData();
+      alert(t("admin.addSuccess"));
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      alert(`${t("admin.addError")}: ${error.message || "Unknown error"}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBulkAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bulkText.trim()) return;
