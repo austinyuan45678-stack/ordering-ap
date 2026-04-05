@@ -35,32 +35,6 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const { id } = await params;
-
-    // Delete order items first due to foreign key constraints, then delete order
-    await prisma.$transaction([
-      prisma.orderItem.deleteMany({ where: { orderId: id } }),
-      prisma.order.delete({ where: { id } })
-    ]);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("ORDER_DELETE_ERROR", error);
-    return new NextResponse("Internal Error", { status: 500 });
-  }
-}
-
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-
     if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
