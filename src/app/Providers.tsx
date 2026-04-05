@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react";
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { CartProvider } from "@/components/CartContext";
+import { MessageCircle } from "lucide-react";
 
 type Language = "en" | "zh" | "vi";
 type Currency = "CNY" | "VND";
@@ -65,7 +66,7 @@ const translations: Record<Language, Record<string, string>> = {
     "account.orderedAt": "下单时间",
     "account.notSet": "未设置",
     "account.cancelOrder": "取消订单",
-    "account.contactUs": "联系客服",
+    "account.contactUs": "在线客服",
     "admin.contactInfo": "客服电话设定",
     "admin.dashboard": "管理后台仪表盘",
     "admin.products": "商品管理",
@@ -87,9 +88,10 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.passTooShort": "密码长度不足",
     "admin.passSuccess": "密码修改成功！",
     "admin.table.date": "日期",
-    "admin.table.customer": "客户信息",
-    "admin.table.product": "商品信息",
-    "admin.table.contact": "联系方式",
+    "admin.table.customer": "客户姓名",
+    "admin.table.contact": "联系账号/电话",
+    "admin.table.product": "商品详情",
+    "admin.table.address": "配送地址",
     "admin.addSuccess": "添加成功！",
     "admin.addError": "添加失败，请重试",
     "admin.bulkSuccess": "批量添加成功！",
@@ -128,6 +130,8 @@ const translations: Record<Language, Record<string, string>> = {
     "order.status.PROCESSING": "处理中",
     "order.status.COMPLETED": "已完成",
     "order.status.CANCELLED": "已取消",
+    "order.status.CANCELLED_BY_USER": "客户取消",
+    "order.status.CANCELLED_BY_ADMIN": "管理员取消",
     "general.loading": "加载中...",
     "general.noData": "暂无数据",
     "general.user": "用户",
@@ -173,7 +177,7 @@ const translations: Record<Language, Record<string, string>> = {
     "account.orderedAt": "Ordered",
     "account.notSet": "N/A",
     "account.cancelOrder": "Cancel Order",
-    "account.contactUs": "Contact Us",
+    "account.contactUs": "Live Chat",
     "admin.contactInfo": "Support Contact",
     "admin.dashboard": "Admin Dashboard",
     "admin.products": "Manage Products",
@@ -195,9 +199,10 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.passTooShort": "Password too short",
     "admin.passSuccess": "Password changed successfully!",
     "admin.table.date": "Date",
-    "admin.table.customer": "Customer",
-    "admin.table.product": "Product",
-    "admin.table.contact": "Contact",
+    "admin.table.customer": "Customer Name",
+    "admin.table.contact": "Account / Phone",
+    "admin.table.product": "Products",
+    "admin.table.address": "Address",
     "admin.addSuccess": "Added successfully!",
     "admin.addError": "Error adding product",
     "admin.bulkSuccess": "Bulk add successful!",
@@ -236,6 +241,8 @@ const translations: Record<Language, Record<string, string>> = {
     "order.status.PROCESSING": "Processing",
     "order.status.COMPLETED": "Completed",
     "order.status.CANCELLED": "Cancelled",
+    "order.status.CANCELLED_BY_USER": "Cancelled by User",
+    "order.status.CANCELLED_BY_ADMIN": "Cancelled by Admin",
     "general.loading": "Loading...",
     "general.noData": "No data available",
     "general.user": "User",
@@ -268,7 +275,7 @@ const translations: Record<Language, Record<string, string>> = {
     "account.orderedAt": "Ngày đặt",
     "account.notSet": "Chưa thiết lập",
     "account.cancelOrder": "Hủy đơn hàng",
-    "account.contactUs": "Liên hệ CSKH",
+    "account.contactUs": "Chat với CSKH",
     "admin.contactInfo": "Cài đặt SĐT",
     "account.password": "Đổi mật khẩu",
     "account.oldPassword": "Mật khẩu cũ",
@@ -296,9 +303,10 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.passTooShort": "Mật khẩu quá ngắn",
     "admin.passSuccess": "Đổi mật khẩu thành công!",
     "admin.table.date": "Ngày",
-    "admin.table.customer": "Khách hàng",
+    "admin.table.customer": "Tên Khách",
+    "admin.table.contact": "Tài khoản / SĐT",
     "admin.table.product": "Sản phẩm",
-    "admin.table.contact": "Liên hệ",
+    "admin.table.address": "Địa chỉ giao hàng",
     "admin.addSuccess": "Thêm thành công!",
     "admin.addError": "Lỗi khi thêm sản phẩm",
     "admin.bulkSuccess": "Thêm hàng loạt thành công!",
@@ -337,6 +345,8 @@ const translations: Record<Language, Record<string, string>> = {
     "order.status.PROCESSING": "Đang xử lý",
     "order.status.COMPLETED": "Hoàn thành",
     "order.status.CANCELLED": "Đã hủy",
+    "order.status.CANCELLED_BY_USER": "Khách hàng hủy",
+    "order.status.CANCELLED_BY_ADMIN": "Quản trị viên hủy",
     "general.loading": "Đang tải...",
     "general.noData": "Không có dữ liệu",
     "general.user": "Người dùng",
@@ -370,11 +380,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [priceMode, setPriceMode] = useState<PriceMode>("DUAL");
   const [mounted, setMounted] = useState(false);
   
+  const [supportPhone, setSupportPhone] = useState("");
+  
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const savedLang = localStorage.getItem("lang") as Language;
-    if (savedLang === "en" || savedLang === "zh") {
+    if (savedLang === "en" || savedLang === "zh" || savedLang === "vi") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLang(savedLang);
     }
@@ -388,6 +400,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPriceMode(savedMode);
     }
+
+    fetch("/api/settings").then(res => res.json()).then(data => {
+      if (data.phone) setSupportPhone(data.phone);
+    });
   }, []);
 
   const changeLang = (newLang: Language) => {
@@ -440,6 +456,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE, getProductName, getProductDesc, getProductUnit }}>
         <CartProvider>
           {children}
+          {supportPhone && (
+            <a
+              href={`https://wa.me/${supportPhone.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="fixed bottom-6 right-6 z-50 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-transform hover:scale-110 flex items-center justify-center group"
+              title={t("account.contactUs")}
+            >
+              <MessageCircle className="h-6 w-6" />
+              <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap ml-0 group-hover:ml-2 font-medium">
+                {t("account.contactUs")}
+              </span>
+            </a>
+          )}
         </CartProvider>
       </AppContext.Provider>
     </SessionProvider>

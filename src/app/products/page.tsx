@@ -33,7 +33,7 @@ export default function ProductsPage() {
     }
     addToCart(product, 1);
     setAddingId(product.id);
-    setTimeout(() => setAddingId(null), 1000);
+    setTimeout(() => setAddingId(null), 600);
   };
 
   return (

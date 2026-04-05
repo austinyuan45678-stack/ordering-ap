@@ -126,8 +126,9 @@ export default function StaffPage() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.date")}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.customer")}</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.product")}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.contact")}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.address")}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.product")}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.status")}</th>
             </tr>
           </thead>
@@ -139,7 +140,13 @@ export default function StaffPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{order.user.name || t("general.user")}</div>
-                  <div className="text-sm text-gray-500">{order.user.email || order.user.phone}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-blue-600">{order.phone}</div>
+                  <div className="text-xs text-gray-500">{order.user.email || order.user.phone}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900 max-w-xs break-words">{order.address}</div>
                 </td>
                 <td className="px-6 py-4">
                   <ul className="list-disc pl-4">
@@ -151,21 +158,22 @@ export default function StaffPage() {
                   </ul>
                   <div className="text-sm font-bold mt-1 text-blue-600">{t("cart.total")}: {formatPrice(order.totalAmount)}</div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{order.phone}</div>
-                  <div className="text-sm text-gray-500 max-w-xs break-words" title={order.address}>{order.address}</div>
-                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <select
-                    value={order.status}
-                    onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                    className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 p-1"
-                  >
-                    <option value="PENDING">{t("order.status.PENDING")}</option>
-                    <option value="PROCESSING">{t("order.status.PROCESSING")}</option>
-                    <option value="COMPLETED">{t("order.status.COMPLETED")}</option>
-                    <option value="CANCELLED">{t("order.status.CANCELLED")}</option>
-                  </select>
+                  {order.status.startsWith('CANCELLED') ? (
+                    <span className="px-2 py-1 text-xs rounded-full whitespace-nowrap font-bold bg-red-100 text-red-800">
+                      {t(`order.status.${order.status}`)}
+                    </span>
+                  ) : (
+                    <select
+                      value={order.status}
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 p-1"
+                    >
+                      <option value="PENDING">{t("order.status.PENDING")}</option>
+                      <option value="PROCESSING">{t("order.status.PROCESSING")}</option>
+                      <option value="COMPLETED">{t("order.status.COMPLETED")}</option>
+                    </select>
+                  )}
                 </td>
               </tr>
             ))}

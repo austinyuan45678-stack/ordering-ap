@@ -44,7 +44,10 @@ export async function PATCH(
       return new NextResponse("Missing status", { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({ where: { id } });
+    const order = await prisma.order.findUnique({ 
+      where: { id },
+      include: { items: true } 
+    });
 
     if (!order) return new NextResponse("Order not found", { status: 404 });
 
@@ -52,13 +55,32 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (session.user.role === "USER" && status !== "CANCELLED") {
-      return new NextResponse("Users can only cancel their own orders", { status: 403 });
+    let finalStatus = status;
+
+    if (session.user.role === "USER" && status === "CANCELLED") {
+      finalStatus = "CANCELLED_BY_USER";
+    } else if (status === "CANCELLED") {
+      finalStatus = "CANCELLED_BY_ADMIN";
+    }
+
+    // Check if moving to PROCESSING or COMPLETED from PENDING
+    if ((finalStatus === "PROCESSING" || finalStatus === "COMPLETED") && order.status === "PENDING") {
+      // Deduct stock
+      for (const item of order.items) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } }
+        });
+      }
     }
 
     const updatedOrder = await prisma.order.update({
       where: { id },
-      data: { status },
+      data: { status: finalStatus },
+      include: {
+        user: true,
+        items: { include: { product: true } }
+      }
     });
 
     return NextResponse.json(updatedOrder);

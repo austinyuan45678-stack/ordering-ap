@@ -20,16 +20,11 @@ export default function AccountPage() {
     }
   }, [status, router]);
 
-  const [supportPhone, setSupportPhone] = useState("");
-
   useEffect(() => {
     if (session?.user) {
       fetch("/api/orders", { cache: "no-store" })
         .then((res) => res.json())
         .then((data) => setOrders(data));
-      
-      const phone = localStorage.getItem("support_phone");
-      if (phone) setSupportPhone(phone);
     }
   }, [session]);
 
@@ -91,11 +86,6 @@ export default function AccountPage() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex justify-between items-start mb-4">
           <h1 className="text-2xl font-bold">{t("account.title")}</h1>
-          {supportPhone && (
-            <a href={`tel:${supportPhone}`} className="bg-green-50 text-green-600 px-3 py-1.5 rounded-md text-sm font-medium flex items-center hover:bg-green-100 transition">
-              <span className="mr-1">📞</span> {t("account.contactUs")}
-            </a>
-          )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
@@ -163,10 +153,10 @@ export default function AccountPage() {
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${
                     order.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
                     order.status === "COMPLETED" ? "bg-green-100 text-green-800" :
-                    order.status === "CANCELLED" ? "bg-red-100 text-red-800" :
+                    order.status.startsWith("CANCELLED") ? "bg-red-100 text-red-800" :
                     "bg-blue-100 text-blue-800"
                   }`}>
-                    {t(`order.status.${order.status}`)}
+                    {t(order.status.startsWith("CANCELLED") ? "order.status.CANCELLED" : `order.status.${order.status}`)}
                   </span>
                   
                   {order.status === "PENDING" && (

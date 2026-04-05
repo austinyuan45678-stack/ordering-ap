@@ -73,106 +73,26 @@ export default function AdminPage() {
   useEffect(() => {
     if (session?.user.role === "ADMIN") {
       fetchData();
-      const phone = localStorage.getItem("support_phone");
-      if (phone) setSupportPhone(phone);
+      fetch("/api/settings").then(res => res.json()).then(data => {
+        if (data.phone) setSupportPhone(data.phone);
+      });
     }
   }, [activeTab, session]);
 
-  // Voice Notification Polling
-  useEffect(() => {
-    if (session?.user.role !== "ADMIN") return;
-    
-    // Initial fetch to get baseline order count
-    fetch("/api/orders").then(res => res.json()).then(data => {
-      prevOrderCountRef.current = data.length;
-    });
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch("/api/orders");
-        const data = await res.json();
-        
-        if (data.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
-          // Play voice notification
-          if ('speechSynthesis' in window) {
-            const userName = data[0]?.user?.name || "未知用户";
-            const msg = new SpeechSynthesisUtterance(`用户 ${userName} 已经下单，请及时处理`);
-            msg.lang = 'zh-CN';
-            window.speechSynthesis.speak(msg);
-            
-            // Show toast notification
-            setNewOrderNotification({ show: true, name: userName });
-            // Auto hide after 15 seconds
-            setTimeout(() => setNewOrderNotification({ show: false, name: "" }), 15000);
-          }
-          if (activeTab === "orders") {
-            setOrders(data);
-          }
-        }
-        prevOrderCountRef.current = data.length;
-      } catch (err) {
-        console.error(err);
-      }
-    }, 10000); // Check every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [session, activeTab]);
-
-
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const handleSaveSupportPhone = async () => {
     try {
-      let imageUrl = "";
-      if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-        if (!uploadRes.ok) {
-          const errText = await uploadRes.text();
-          throw new Error(`Upload failed: ${errText}`);
-        }
-        const uploadData = await uploadRes.json();
-        imageUrl = uploadData.url;
-      }
-
-      const finalPrice = currency === "VND" ? parseFloat(price) / exchangeRate : parseFloat(price);
-
-      const res = await fetch("/api/products", {
+      const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          nameVi,
-          description,
-          descriptionVi,
-          price: finalPrice,
-          stock: stock ? parseInt(stock) : 999,
-          unit,
-          imageUrl,
-        }),
+        body: JSON.stringify({ phone: supportPhone }),
       });
-
-      if (!res.ok) throw new Error("Failed to add product");
-
-      setName("");
-      setNameVi("");
-      setDescription("");
-      setDescriptionVi("");
-      setPrice("");
-      setStock("");
-      setUnit("个/Cái");
-      setFile(null);
-      fetchData();
-      alert(t("admin.addSuccess"));
-    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      alert(`${t("admin.addError")}: ${error.message || "Unknown error"}`);
-    } finally {
-      setLoading(false);
+      if (res.ok) {
+        alert(t("admin.addSuccess"));
+      } else {
+        alert("Failed to save");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -870,8 +790,9 @@ export default function AdminPage() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.date")}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.customer")}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.product")}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.contact")}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.address")}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.table.product")}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("admin.status")}</th>
               </tr>
             </thead>
@@ -883,7 +804,13 @@ export default function AdminPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{order.user.name || t("general.user")}</div>
-                    <div className="text-sm text-gray-500">{order.user.email || order.user.phone}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-blue-600">{order.phone}</div>
+                    <div className="text-xs text-gray-500">{order.user.email || order.user.phone}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900 max-w-xs break-words">{order.address}</div>
                   </td>
                   <td className="px-6 py-4">
                     <ul className="list-disc pl-4">
@@ -895,21 +822,18 @@ export default function AdminPage() {
                     </ul>
                     <div className="text-sm font-bold mt-1 text-blue-600">{t("cart.total")}: {formatPrice(order.totalAmount)}</div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{order.phone}</div>
-                    <div className="text-sm text-gray-500 max-w-xs break-words" title={order.address}>{order.address}</div>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col gap-2 items-start">
                       <select
                         value={order.status}
                         onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                        className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 p-1"
+                        className={`text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-1 ${order.status.startsWith('CANCELLED') ? 'bg-red-50 text-red-700' : 'bg-gray-50'}`}
                       >
                         <option value="PENDING">{t("order.status.PENDING")}</option>
                         <option value="PROCESSING">{t("order.status.PROCESSING")}</option>
                         <option value="COMPLETED">{t("order.status.COMPLETED")}</option>
-                        <option value="CANCELLED">{t("order.status.CANCELLED")}</option>
+                        <option value="CANCELLED">{t("order.status.CANCELLED_BY_ADMIN")}</option>
+                        {order.status === "CANCELLED_BY_USER" && <option value="CANCELLED_BY_USER" disabled>{t("order.status.CANCELLED_BY_USER")}</option>}
                       </select>
                       <button 
                         onClick={() => adminDeleteOrder(order.id)} 

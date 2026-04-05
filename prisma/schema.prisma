@@ -57,3 +57,8 @@ model OrderItem {
   quantity  Int
   price     Float
 }
+
+model Setting {
+  key   String @id
+  value String
+}
