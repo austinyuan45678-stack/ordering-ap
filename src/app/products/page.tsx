@@ -11,7 +11,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const { data: session } = useSession();
   const router = useRouter();
-  const { t, formatPrice, getProductName, getProductDesc } = useApp();
+  const { t, formatPrice, getProductName, getProductDesc, lang } = useApp();
   const { addToCart } = useCart();
   const [addingId, setAddingId] = useState<string | null>(null);
 
