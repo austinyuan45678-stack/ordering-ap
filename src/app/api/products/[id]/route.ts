@@ -18,12 +18,13 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { price, isAvailable, name } = body;
+    const { price, isAvailable, name, imageUrl } = body;
 
-    const updateData: Record<string, number | boolean | string> = {};
+    const updateData: Record<string, number | boolean | string | null> = {};
     if (price !== undefined) updateData.price = parseFloat(price);
     if (isAvailable !== undefined) updateData.isAvailable = Boolean(isAvailable);
     if (name !== undefined) updateData.name = String(name);
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
 
     const product = await prisma.product.update({
       where: { id },

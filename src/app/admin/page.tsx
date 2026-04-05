@@ -30,6 +30,7 @@ export default function AdminPage() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editPriceValue, setEditPriceValue] = useState("");
   const [editNameValue, setEditNameValue] = useState("");
+  const [editFile, setEditFile] = useState<File | null>(null);
 
   const prevOrderCountRef = useRef(0);
 
@@ -183,19 +184,37 @@ export default function AdminPage() {
 
   const updateProductPriceAndName = async (productId: string) => {
     try {
+      setLoading(true);
+      let imageUrl;
+
+      if (editFile) {
+        const formData = new FormData();
+        formData.append("file", editFile);
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (!uploadRes.ok) throw new Error("Upload failed");
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.url;
+      }
+
       const parsedPrice = parseFloat(editPriceValue);
       const finalPrice = currency === "VND" ? parsedPrice / exchangeRate : parsedPrice;
       const res = await fetch(`/api/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ price: finalPrice, name: editNameValue }),
+        body: JSON.stringify({ price: finalPrice, name: editNameValue, ...(imageUrl && { imageUrl }) }),
       });
-      if (!res.ok) throw new Error("Failed to update price");
+      if (!res.ok) throw new Error("Failed to update product");
       
       setEditingProductId(null);
+      setEditFile(null);
       fetchData();
     } catch (error) {
       alert(t("admin.updatePriceError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -368,10 +387,24 @@ export default function AdminPage() {
                         fill
                         className="object-cover rounded-md"
                       />
+                      {editingProductId === product.id && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
+                          <label className="text-white text-xs cursor-pointer px-2 py-1 bg-gray-800 rounded">
+                            换图
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => setEditFile(e.target.files?.[0] || null)} />
+                          </label>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+                    <div className="w-24 h-24 bg-gray-200 rounded-md flex flex-col items-center justify-center text-xs text-gray-500 flex-shrink-0 relative">
                       {t("product.noImage")}
+                      {editingProductId === product.id && (
+                        <label className="text-white text-xs cursor-pointer px-2 py-1 bg-gray-800 rounded mt-2 absolute">
+                          加图
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => setEditFile(e.target.files?.[0] || null)} />
+                        </label>
+                      )}
                     </div>
                   )}
                   <div className="flex flex-col justify-between w-full">
@@ -406,8 +439,8 @@ export default function AdminPage() {
                             onChange={(e) => setEditPriceValue(e.target.value)}
                             className="w-20 px-1 py-0.5 border rounded text-sm"
                           />
-                            <button onClick={() => updateProductPriceAndName(product.id)} className="text-green-600 hover:text-green-700 text-sm font-medium">{t("admin.save")}</button>
-                          <button onClick={() => setEditingProductId(null)} className="text-gray-500 hover:text-gray-700 text-sm">{t("admin.cancel")}</button>
+                            <button onClick={() => updateProductPriceAndName(product.id)} disabled={loading} className="text-green-600 hover:text-green-700 text-sm font-medium disabled:opacity-50">{t("admin.save")}</button>
+                            <button onClick={() => { setEditingProductId(null); setEditFile(null); }} className="text-gray-500 hover:text-gray-700 text-sm">{t("admin.cancel")}</button>
                         </div>
                       ) : (
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
