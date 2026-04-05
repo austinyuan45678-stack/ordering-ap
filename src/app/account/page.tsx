@@ -79,23 +79,6 @@ export default function AccountPage() {
   };
 
   if (status === "loading") {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
-    try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "CANCELLED" }),
-      });
-      if (res.ok) {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: "CANCELLED" } : o));
-      } else {
-        alert("Failed to cancel order");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-  if (status === "loading") {
     return <div>Loading...</div>;
   }
 
