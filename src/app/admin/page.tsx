@@ -246,11 +246,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleSaveSupportPhone = () => {
-    localStorage.setItem("support_phone", supportPhone);
-    alert(t("admin.addSuccess"));
-  };
-
   const adminChangePassword = async (userId: string) => {
     const newPassword = prompt(t("admin.promptNewPass") || "请输入该用户的新密码 (至少6位):");
     if (!newPassword || newPassword.length < 6) return alert(t("admin.passTooShort") || "密码太短");
