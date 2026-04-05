@@ -11,7 +11,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const { data: session } = useSession();
   const router = useRouter();
-  const { t, formatPrice, getProductName, getProductDesc, lang } = useApp();
+  const { t, formatPrice, getProductName, getProductDesc, getProductUnit, lang } = useApp();
   const { addToCart } = useCart();
   const [addingId, setAddingId] = useState<string | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export default function ProductsPage() {
             <p className="text-gray-600 text-sm mb-4 flex-1">{getProductDesc(product)}</p>
             <div className="flex items-center justify-between mt-auto flex-wrap gap-2 pt-2 border-t border-gray-100">
               <div className="flex flex-col">
-                <span className="font-bold text-lg text-blue-600">{formatPrice(product.price)}</span>
+                <span className="font-bold text-lg text-blue-600">{formatPrice(product.price)} <span className="text-sm text-gray-500 font-normal">/ {getProductUnit(product)}</span></span>
                 <span className="text-xs text-gray-500 font-medium">
                   {product.stock > 0 ? `${t("product.stock")}: ${product.stock}` : t("product.outOfStock")}
                 </span>

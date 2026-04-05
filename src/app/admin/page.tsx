@@ -9,7 +9,7 @@ import Image from "next/image";
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { t, formatPrice, currency, exchangeRate, getProductName } = useApp();
+  const { t, formatPrice, currency, exchangeRate, getProductName, getProductUnit } = useApp();
 
   const [products, setProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -23,6 +23,7 @@ export default function AdminPage() {
   const [descriptionVi, setDescriptionVi] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [unit, setUnit] = useState("个/Cái");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +38,7 @@ export default function AdminPage() {
   const [editDescValue, setEditDescValue] = useState("");
   const [editDescViValue, setEditDescViValue] = useState("");
   const [editStockValue, setEditStockValue] = useState("");
+  const [editUnitValue, setEditUnitValue] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
 
   const prevOrderCountRef = useRef(0);
@@ -146,6 +148,7 @@ export default function AdminPage() {
           descriptionVi,
           price: finalPrice,
           stock: stock ? parseInt(stock) : 999,
+          unit,
           imageUrl,
         }),
       });
@@ -158,6 +161,7 @@ export default function AdminPage() {
       setDescriptionVi("");
       setPrice("");
       setStock("");
+      setUnit("个/Cái");
       setFile(null);
       fetchData();
       alert(t("admin.addSuccess"));
@@ -241,6 +245,7 @@ export default function AdminPage() {
           description: editDescValue,
           descriptionVi: editDescViValue,
           stock: parsedStock,
+          unit: editUnitValue,
           ...(imageUrl && { imageUrl }) 
         }),
       });
@@ -486,15 +491,32 @@ export default function AdminPage() {
                   className="w-full px-3 py-2 border rounded-md"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.stock")}</label>
-                <input
-                  required
-                  type="number"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
-                />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.stock")}</label>
+                  <input
+                    required
+                    type="number"
+                    value={stock}
+                    onChange={(e) => setStock(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.unit")}</label>
+                  <select
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="个/Cái">个/Cái</option>
+                    <option value="袋/Túi">袋/Túi</option>
+                    <option value="盒/Hộp">盒/Hộp</option>
+                    <option value="瓶/Chai">瓶/Chai</option>
+                    <option value="罐/Lon">罐/Lon</option>
+                    <option value="包/Gói">包/Gói</option>
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.image")}</label>
@@ -583,7 +605,18 @@ export default function AdminPage() {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-xs text-gray-500">{t("product.stock")}:</span>
-                            <input type="number" value={editStockValue} onChange={(e) => setEditStockValue(e.target.value)} className="w-20 px-2 py-1 border rounded text-sm" />
+                            <input type="number" value={editStockValue} onChange={(e) => setEditStockValue(e.target.value)} className="w-16 px-2 py-1 border rounded text-sm" />
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">{t("product.unit")}:</span>
+                            <select value={editUnitValue} onChange={(e) => setEditUnitValue(e.target.value)} className="w-24 px-1 py-1 border rounded text-sm">
+                              <option value="个/Cái">个/Cái</option>
+                              <option value="袋/Túi">袋/Túi</option>
+                              <option value="盒/Hộp">盒/Hộp</option>
+                              <option value="瓶/Chai">瓶/Chai</option>
+                              <option value="罐/Lon">罐/Lon</option>
+                              <option value="包/Gói">包/Gói</option>
+                            </select>
                           </div>
                           <div className="flex space-x-2 mt-2 sm:mt-0 w-full sm:w-auto justify-end sm:ml-auto">
                             <button onClick={() => updateProductPriceAndName(product.id)} disabled={loading} className="text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700 text-sm font-medium disabled:opacity-50">{t("admin.save")}</button>
@@ -594,7 +627,7 @@ export default function AdminPage() {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-2 sm:mb-0">
                             <p className="font-semibold text-blue-600 text-lg">{formatPrice(product.price)}</p>
-                            <p className="text-sm text-gray-500">{t("product.stock")}: <span className="font-bold">{product.stock}</span></p>
+                            <p className="text-sm text-gray-500">{t("product.stock")}: <span className="font-bold">{product.stock}</span> {getProductUnit(product)}</p>
                           </div>
                           <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
                             <button
@@ -605,6 +638,7 @@ export default function AdminPage() {
                                 setEditDescValue(product.description || "");
                                 setEditDescViValue(product.descriptionVi || "");
                                 setEditStockValue(product.stock.toString());
+                                setEditUnitValue(product.unit || "个/Cái");
                                 const displayPrice = currency === "VND" ? (product.price * exchangeRate) : product.price;
                                 setEditPriceValue(displayPrice.toString());
                               }}

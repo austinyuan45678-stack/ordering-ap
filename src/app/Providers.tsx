@@ -20,6 +20,7 @@ interface AppContextType {
   exchangeRate: number;
   getProductName: (product: any) => string; // eslint-disable-line @typescript-eslint/no-explicit-any
   getProductDesc: (product: any) => string; // eslint-disable-line @typescript-eslint/no-explicit-any
+  getProductUnit: (product: any) => string; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const translations: Record<Language, Record<string, string>> = {
@@ -103,6 +104,7 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.viewOrder": "去查看",
     "product.descVi": "越南语描述",
     "product.stock": "库存数量",
+    "product.unit": "单位",
     "product.outOfStock": "已售罄",
     "admin.deleteProduct": "永久删除",
     "admin.deleteProductConfirm": "确定要永久删除这个下架商品吗？(会影响关联的旧订单显示)",
@@ -205,6 +207,7 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.viewOrder": "View Order",
     "product.descVi": "Desc (VI)",
     "product.stock": "Stock",
+    "product.unit": "Unit",
     "product.outOfStock": "Out of Stock",
     "admin.deleteProduct": "Delete Permanently",
     "admin.deleteProductConfirm": "Permanently delete this unlisted product? (May affect older orders)",
@@ -300,6 +303,7 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.viewOrder": "Xem đơn hàng",
     "product.descVi": "Mô tả (Việt)",
     "product.stock": "Tồn kho",
+    "product.unit": "Đơn vị",
     "product.outOfStock": "Hết hàng",
     "admin.deleteProduct": "Xóa vĩnh viễn",
     "admin.deleteProductConfirm": "Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này?",
@@ -398,6 +402,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return product.description || "";
   };
 
+  const getProductUnit = (product: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const parts = (product.unit || "个/Cái").split("/");
+    if (lang === "vi" && parts.length > 1) return parts[1];
+    return parts[0];
+  };
+
   const formatPrice = (priceCny: number) => {
     const priceVnd = priceCny * EXCHANGE_RATE;
     const strCny = `¥${priceCny.toFixed(2)}`;
@@ -412,7 +422,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionProvider>
-      <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE, getProductName, getProductDesc }}>
+      <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE, getProductName, getProductDesc, getProductUnit }}>
         <CartProvider>
           {children}
         </CartProvider>

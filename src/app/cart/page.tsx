@@ -10,7 +10,7 @@ import { Trash2, Plus, Minus } from "lucide-react";
 
 export default function CartPage() {
   const { items, updateQuantity, removeFromCart, totalPrice, clearCart } = useCart();
-  const { t, formatPrice, getProductName } = useApp();
+  const { t, formatPrice, getProductName, getProductUnit } = useApp();
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -87,7 +87,7 @@ export default function CartPage() {
               )}
               <div className="flex-1 text-center sm:text-left">
                 <h3 className="font-bold text-lg">{getProductName(item.product)}</h3>
-                <p className="text-gray-500">{formatPrice(item.product.price)}</p>
+                <p className="text-gray-500">{formatPrice(item.product.price)} / {getProductUnit(item.product)}</p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center border rounded-md">

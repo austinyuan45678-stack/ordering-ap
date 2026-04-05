@@ -43,7 +43,7 @@ export async function DELETE(
 
     const { id } = await params;
     const body = await req.json();
-    const { price, isAvailable, name, nameVi, description, descriptionVi, imageUrl, stock } = body;
+    const { price, isAvailable, name, nameVi, description, descriptionVi, imageUrl, stock, unit } = body;
 
     const updateData: Record<string, number | boolean | string | null> = {};
     if (price !== undefined) updateData.price = parseFloat(price);
@@ -54,6 +54,7 @@ export async function DELETE(
     if (descriptionVi !== undefined) updateData.descriptionVi = descriptionVi;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     if (stock !== undefined) updateData.stock = parseInt(stock, 10);
+    if (unit !== undefined) updateData.unit = String(unit);
 
     const product = await prisma.product.update({
       where: { id },

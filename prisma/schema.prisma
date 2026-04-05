@@ -26,6 +26,7 @@ model Product {
   description   String?
   descriptionVi String?
   price         Float
+  unit          String      @default("个/Cái")
   stock         Int         @default(999)
   imageUrl      String?
   isAvailable   Boolean     @default(true)

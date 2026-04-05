@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { name, nameVi, description, descriptionVi, price, stock, imageUrl } = await req.json();
+    const { name, nameVi, description, descriptionVi, price, stock, unit, imageUrl } = await req.json();
 
     if (!name || !price) {
       return new NextResponse("Missing fields", { status: 400 });
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
         descriptionVi: descriptionVi || null,
         price: parseFloat(price),
         stock: stock !== undefined ? parseInt(stock, 10) : 999,
+        unit: unit || "个/Cái",
         imageUrl,
       },
     });
