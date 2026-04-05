@@ -279,6 +279,42 @@ export default function AdminPage() {
     }
   };
 
+  const adminChangeRole = async (userId: string, newRole: string) => {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (res.ok) {
+        alert(t("admin.roleUpdated"));
+        fetchData();
+      } else {
+        const errText = await res.text();
+        alert(errText || "Error changing role");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const adminDeleteUser = async (userId: string) => {
+    if (!confirm(t("admin.deleteConfirm"))) return;
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchData();
+      } else {
+        const errText = await res.text();
+        alert(errText || "Error deleting user");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (status === "loading" || !session || session.user.role !== "ADMIN") {
     return <div className="text-center py-20">{t("general.loading")}</div>;
   }
@@ -561,7 +597,16 @@ export default function AdminPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{u.name || t("general.user")}</div>
-                    <div className="text-xs text-gray-500">{u.role}</div>
+                    <select
+                      value={u.role}
+                      onChange={(e) => adminChangeRole(u.id, e.target.value)}
+                      className="text-xs border-gray-300 rounded shadow-sm bg-gray-50 mt-1 py-1"
+                    >
+                      <option value="USER">USER (普通用户)</option>
+                      <option value="VIP">VIP (贵宾)</option>
+                      <option value="STAFF">STAFF (员工)</option>
+                      <option value="ADMIN">ADMIN (管理员)</option>
+                    </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {u.email || u.phone || "N/A"}
@@ -569,13 +614,21 @@ export default function AdminPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
                     {u._count?.orders || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-3">
                     <button 
                       onClick={() => adminChangePassword(u.id)}
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
                       {t("account.password")}
                     </button>
+                    {session.user.id !== u.id && (
+                      <button 
+                        onClick={() => adminDeleteUser(u.id)}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        {t("admin.delete")}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
