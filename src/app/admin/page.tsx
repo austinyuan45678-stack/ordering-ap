@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [description, setDescription] = useState("");
   const [descriptionVi, setDescriptionVi] = useState("");
   const [price, setPrice] = useState("");
+  const [stock, setStock] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +34,9 @@ export default function AdminPage() {
   const [editPriceValue, setEditPriceValue] = useState("");
   const [editNameValue, setEditNameValue] = useState("");
   const [editNameViValue, setEditNameViValue] = useState("");
+  const [editDescValue, setEditDescValue] = useState("");
+  const [editDescViValue, setEditDescViValue] = useState("");
+  const [editStockValue, setEditStockValue] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
 
   const prevOrderCountRef = useRef(0);
@@ -133,6 +137,7 @@ export default function AdminPage() {
           description,
           descriptionVi,
           price: finalPrice,
+          stock: stock ? parseInt(stock) : 999,
           imageUrl,
         }),
       });
@@ -144,6 +149,7 @@ export default function AdminPage() {
       setDescription("");
       setDescriptionVi("");
       setPrice("");
+      setStock("");
       setFile(null);
       fetchData();
       alert(t("admin.addSuccess"));
@@ -215,11 +221,20 @@ export default function AdminPage() {
       }
 
       const parsedPrice = parseFloat(editPriceValue);
+      const parsedStock = parseInt(editStockValue) || 0;
       const finalPrice = currency === "VND" ? parsedPrice / exchangeRate : parsedPrice;
       const res = await fetch(`/api/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ price: finalPrice, name: editNameValue, nameVi: editNameViValue, ...(imageUrl && { imageUrl }) }),
+        body: JSON.stringify({ 
+          price: finalPrice, 
+          name: editNameValue, 
+          nameVi: editNameViValue, 
+          description: editDescValue,
+          descriptionVi: editDescViValue,
+          stock: parsedStock,
+          ...(imageUrl && { imageUrl }) 
+        }),
       });
       if (!res.ok) throw new Error("Failed to update product");
       
@@ -243,8 +258,21 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to update availability");
       
       fetchData();
-    } catch (error) {
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       alert(t("admin.updateAvailError"));
+    }
+  };
+
+  const deleteProduct = async (productId: string) => {
+    if (!confirm(t("admin.deleteProductConfirm"))) return;
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      fetchData();
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      alert(error.message);
     }
   };
 
@@ -428,6 +456,16 @@ export default function AdminPage() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.stock")}</label>
+                <input
+                  required
+                  type="number"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.image")}</label>
                 <input
                   type="file"
@@ -449,9 +487,9 @@ export default function AdminPage() {
           <div className="md:col-span-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {products.map((product) => (
-                <div key={product.id} className="bg-white rounded-lg shadow-sm border p-4 flex gap-4">
+                <div key={product.id} className={`bg-white rounded-lg shadow-sm border p-4 flex flex-col sm:flex-row gap-4 ${!product.isAvailable ? 'opacity-70 bg-gray-50' : ''}`}>
                   {product.imageUrl ? (
-                    <div className="relative w-24 h-24 flex-shrink-0">
+                    <div className="relative w-full sm:w-24 h-32 sm:h-24 flex-shrink-0">
                       <Image
                         src={product.imageUrl}
                         alt={product.name}
@@ -468,7 +506,7 @@ export default function AdminPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="w-24 h-24 bg-gray-200 rounded-md flex flex-col items-center justify-center text-xs text-gray-500 flex-shrink-0 relative">
+                    <div className="w-full sm:w-24 h-32 sm:h-24 bg-gray-200 rounded-md flex flex-col items-center justify-center text-xs text-gray-500 flex-shrink-0 relative">
                       {t("product.noImage")}
                       {editingProductId === product.id && (
                         <label className="text-white text-xs cursor-pointer px-2 py-1 bg-gray-800 rounded mt-2 absolute">
@@ -480,72 +518,83 @@ export default function AdminPage() {
                   )}
                     <div className="flex flex-col justify-between w-full">
                     <div>
-                      <div className="flex flex-col justify-between items-start w-full mb-1">
+                      <div className="flex flex-col justify-between items-start w-full mb-2">
                         {editingProductId === product.id ? (
-                          <div className="flex flex-col space-y-1 w-full mr-2">
-                            <input
-                              type="text"
-                              value={editNameValue}
-                              onChange={(e) => setEditNameValue(e.target.value)}
-                              className="px-2 py-1 border rounded text-sm w-full"
-                              placeholder={t("product.name")}
-                            />
-                            <input
-                              type="text"
-                              value={editNameViValue}
-                              onChange={(e) => setEditNameViValue(e.target.value)}
-                              className="px-2 py-1 border rounded text-sm w-full"
-                              placeholder={t("product.nameVi")}
-                            />
+                          <div className="flex flex-col space-y-2 w-full">
+                            <input type="text" value={editNameValue} onChange={(e) => setEditNameValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.name")} />
+                            <input type="text" value={editNameViValue} onChange={(e) => setEditNameViValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.nameVi")} />
+                            <textarea value={editDescValue} onChange={(e) => setEditDescValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.desc")} rows={2} />
+                            <textarea value={editDescViValue} onChange={(e) => setEditDescViValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.descVi")} rows={2} />
                           </div>
                         ) : (
-                          <div className="flex justify-between w-full">
-                            <h3 className="font-bold pr-2">{product.name} {product.nameVi && <span className="text-sm font-normal text-gray-500">({product.nameVi})</span>}</h3>
-                            {!product.isAvailable && (
-                              <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full whitespace-nowrap h-fit">
-                                {t("admin.unlist")}
+                          <div className="flex flex-col w-full">
+                            <div className="flex justify-between w-full items-start">
+                              <h3 className="font-bold text-lg pr-2 leading-tight">
+                                {product.name} 
+                                {product.nameVi && <span className="text-sm font-normal text-gray-500 block">{product.nameVi}</span>}
+                              </h3>
+                              <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap font-bold h-fit ${product.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {product.isAvailable ? t("admin.statusOn") : t("admin.statusOff")}
                               </span>
-                            )}
+                            </div>
+                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">{product.description}</p>
+                            {product.descriptionVi && <p className="text-sm text-gray-500 line-clamp-2">{product.descriptionVi}</p>}
                           </div>
                         )}
                       </div>
-                      {editingProductId !== product.id && <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>}
                     </div>
-                    <div className="mt-2 flex items-center justify-between">
+                    <div className="mt-2 flex items-center justify-between border-t pt-3">
                       {editingProductId === product.id ? (
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={editPriceValue}
-                            onChange={(e) => setEditPriceValue(e.target.value)}
-                            className="w-20 px-1 py-0.5 border rounded text-sm"
-                          />
-                            <button onClick={() => updateProductPriceAndName(product.id)} disabled={loading} className="text-green-600 hover:text-green-700 text-sm font-medium disabled:opacity-50">{t("admin.save")}</button>
-                            <button onClick={() => { setEditingProductId(null); setEditFile(null); }} className="text-gray-500 hover:text-gray-700 text-sm">{t("admin.cancel")}</button>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">{t("product.price")}:</span>
+                            <input type="number" step="0.01" value={editPriceValue} onChange={(e) => setEditPriceValue(e.target.value)} className="w-20 px-2 py-1 border rounded text-sm" />
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">{t("product.stock")}:</span>
+                            <input type="number" value={editStockValue} onChange={(e) => setEditStockValue(e.target.value)} className="w-20 px-2 py-1 border rounded text-sm" />
+                          </div>
+                          <div className="flex space-x-2 mt-2 sm:mt-0 w-full sm:w-auto justify-end sm:ml-auto">
+                            <button onClick={() => updateProductPriceAndName(product.id)} disabled={loading} className="text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700 text-sm font-medium disabled:opacity-50">{t("admin.save")}</button>
+                            <button onClick={() => { setEditingProductId(null); setEditFile(null); }} className="text-gray-600 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm">{t("admin.cancel")}</button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
-                          <p className="font-semibold text-blue-600">{formatPrice(product.price)}</p>
-                          <div className="flex space-x-3 mt-2 sm:mt-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-2 sm:mb-0">
+                            <p className="font-semibold text-blue-600 text-lg">{formatPrice(product.price)}</p>
+                            <p className="text-sm text-gray-500">{t("product.stock")}: <span className="font-bold">{product.stock}</span></p>
+                          </div>
+                          <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
                             <button
                               onClick={() => {
                                 setEditingProductId(product.id);
                                 setEditNameValue(product.name);
                                 setEditNameViValue(product.nameVi || "");
+                                setEditDescValue(product.description || "");
+                                setEditDescViValue(product.descriptionVi || "");
+                                setEditStockValue(product.stock.toString());
                                 const displayPrice = currency === "VND" ? (product.price * exchangeRate) : product.price;
                                 setEditPriceValue(displayPrice.toString());
                               }}
-                              className="text-blue-500 hover:text-blue-700 text-sm font-medium"
+                              className="text-blue-600 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 text-sm font-medium"
                             >
                               {t("admin.edit")}
                             </button>
                             <button
                               onClick={() => toggleProductAvailability(product.id, product.isAvailable)}
-                              className={`${product.isAvailable ? "text-red-500 hover:text-red-700" : "text-green-500 hover:text-green-700"} text-sm font-medium`}
+                              className={`${product.isAvailable ? "text-orange-600 bg-orange-50 hover:bg-orange-100" : "text-green-600 bg-green-50 hover:bg-green-100"} px-3 py-1.5 rounded text-sm font-medium`}
                             >
                               {product.isAvailable ? t("admin.unlist") : t("admin.relist")}
                             </button>
+                            {!product.isAvailable && (
+                              <button
+                                onClick={() => deleteProduct(product.id)}
+                                className="text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded text-sm font-medium"
+                              >
+                                {t("admin.deleteProduct")}
+                              </button>
+                            )}
                           </div>
                         </div>
                       )}

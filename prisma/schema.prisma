@@ -26,6 +26,7 @@ model Product {
   description   String?
   descriptionVi String?
   price         Float
+  stock         Int         @default(999)
   imageUrl      String?
   isAvailable   Boolean     @default(true)
   orderItems    OrderItem[]

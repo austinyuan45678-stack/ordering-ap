@@ -17,8 +17,33 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    // Delete product (ensure Cascade in schema handles order items, or delete manually if needed, but we used OnDelete:Cascade)
+    await prisma.product.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("PRODUCT_DELETE_ERROR", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { id } = await params;
     const body = await req.json();
-    const { price, isAvailable, name, nameVi, description, descriptionVi, imageUrl } = body;
+    const { price, isAvailable, name, nameVi, description, descriptionVi, imageUrl, stock } = body;
 
     const updateData: Record<string, number | boolean | string | null> = {};
     if (price !== undefined) updateData.price = parseFloat(price);
@@ -28,6 +53,7 @@ export async function PATCH(
     if (description !== undefined) updateData.description = description;
     if (descriptionVi !== undefined) updateData.descriptionVi = descriptionVi;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    if (stock !== undefined) updateData.stock = parseInt(stock, 10);
 
     const product = await prisma.product.update({
       where: { id },

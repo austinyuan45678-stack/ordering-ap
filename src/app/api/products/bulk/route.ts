@@ -24,6 +24,7 @@ export async function POST(req: Request) {
         description: item.description || "",
         descriptionVi: item.descriptionVi || null,
         price: parseFloat(item.price) || 0,
+        stock: item.stock !== undefined ? parseInt(item.stock, 10) : 999,
         imageUrl: item.imageUrl || null,
       })),
     });
