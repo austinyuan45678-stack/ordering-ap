@@ -18,8 +18,8 @@ interface AppContextType {
   setPriceMode: (mode: PriceMode) => void;
   formatPrice: (priceCny: number) => string;
   exchangeRate: number;
-  getProductName: (product: any) => string;
-  getProductDesc: (product: any) => string;
+  getProductName: (product: any) => string; // eslint-disable-line @typescript-eslint/no-explicit-any
+  getProductDesc: (product: any) => string; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const translations: Record<Language, Record<string, string>> = {
@@ -337,12 +337,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const t = (key: string) => translations[lang]?.[key] || key;
 
-  const getProductName = (product: any) => {
+  const getProductName = (product: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (lang === "vi" && product.nameVi) return product.nameVi;
     return product.name;
   };
 
-  const getProductDesc = (product: any) => {
+  const getProductDesc = (product: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (lang === "vi" && product.descriptionVi) return product.descriptionVi;
     return product.description || "";
   };

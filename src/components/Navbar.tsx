@@ -73,11 +73,11 @@ export default function Navbar() {
             </button>
             <button
               onClick={() => setPriceMode(priceMode === "DUAL" ? "SINGLE" : "DUAL")}
-              className="text-gray-500 hover:text-gray-700 items-center p-2 hidden sm:flex"
+              className="text-gray-500 hover:text-gray-700 flex items-center p-2"
               title={priceMode === "DUAL" ? t("nav.priceMode.DUAL") : t("nav.priceMode.SINGLE")}
             >
-              <SplitSquareHorizontal className="h-5 w-5 mr-1" />
-              {priceMode === "DUAL" ? t("nav.priceMode.DUAL") : t("nav.priceMode.SINGLE")}
+              <SplitSquareHorizontal className="h-5 w-5 sm:mr-1" />
+              <span className="hidden sm:inline">{priceMode === "DUAL" ? t("nav.priceMode.DUAL") : t("nav.priceMode.SINGLE")}</span>
             </button>
             {session ? (
               <div className="flex items-center space-x-2 sm:space-x-4">
