@@ -31,8 +31,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true, url: blob.url });
-  } catch (error) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("UPLOAD_ERROR", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse(`Internal Error: ${error.message || "Unknown"}`, { status: 500 });
   }
 }
