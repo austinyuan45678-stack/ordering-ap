@@ -362,12 +362,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const t = (key: string) => translations[lang]?.[key] || key;
 
   const getProductName = (product: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (lang === "vi" && product.nameVi) return product.nameVi;
+    if (product.nameVi) return `${product.name} / ${product.nameVi}`;
     return product.name;
   };
 
   const getProductDesc = (product: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (lang === "vi" && product.descriptionVi) return product.descriptionVi;
+    if (product.descriptionVi) return `${product.description || ""} / ${product.descriptionVi}`;
     return product.description || "";
   };
 
