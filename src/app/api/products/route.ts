@@ -14,7 +14,11 @@ export async function GET() {
       where: isAdmin ? undefined : { isAvailable: true },
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(products);
+    
+    // Add cache control headers
+    const response = NextResponse.json(products);
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
+    return response;
   } catch (error) {
     console.error("PRODUCTS_GET_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });

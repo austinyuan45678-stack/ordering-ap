@@ -15,11 +15,15 @@ export default function ProductsPage() {
   const { addToCart } = useCart();
   const [addingId, setAddingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/products", { cache: "no-store" })
+  const fetchProducts = () => {
+    fetch("/api/products", { cache: "no-store", headers: { 'Cache-Control': 'no-cache' } })
       .then((res) => res.json())
       .then((data) => setProducts(data));
-  }, []);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [lang]); // Re-fetch or re-render when language changes if needed
 
   const handleAddToCart = (product: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!session) {
