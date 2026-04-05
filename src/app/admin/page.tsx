@@ -541,6 +541,56 @@ export default function AdminPage() {
         </div>
       )}
 
+      {activeTab === "users" && (
+        <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">注册时间</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">身份/名字</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">联系方式 (Email/Phone)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">订单总数</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((u: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                <tr key={u.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{u.name || t("general.user")}</div>
+                    <div className="text-xs text-gray-500">{u.role}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {u.email || u.phone || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                    {u._count?.orders || 0}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <button 
+                      onClick={() => adminChangePassword(u.id)}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      {t("account.password")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                    {t("general.noData")}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {activeTab === "bulkAdd" && (
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-xl font-bold mb-4">{t("admin.bulkAdd")}</h2>
