@@ -306,6 +306,22 @@ export default function AdminPage() {
     }
   };
 
+  const adminDeleteOrder = async (orderId: string) => {
+    if (!confirm(t("admin.deleteOrderConfirm"))) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchData();
+      } else {
+        alert("Delete failed");
+      }
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      alert(error.message);
+    }
+  };
+
   const adminChangePassword = async (userId: string) => {
     const newPassword = prompt(t("admin.promptNewPass") || "请输入该用户的新密码 (至少6位):");
     if (!newPassword || newPassword.length < 6) return alert(t("admin.passTooShort") || "密码太短");
@@ -704,13 +720,25 @@ export default function AdminPage() {
               <p className="text-3xl font-bold">{orders.length}</p>
             </div>
             <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
-              <p className="text-sm text-green-600 font-semibold mb-1">总收入 (Total Revenue)</p>
+              <p className="text-sm text-green-600 font-semibold mb-1">总收入 ({currency})</p>
               <p className="text-3xl font-bold">{formatPrice(orders.filter(o => o.status === "COMPLETED").reduce((sum, o) => sum + o.totalAmount, 0))}</p>
               <p className="text-xs text-green-700 mt-1">*仅计算已完成的订单</p>
             </div>
             <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
-              <p className="text-sm text-yellow-600 font-semibold mb-1">待处理 (Pending)</p>
+              <p className="text-sm text-yellow-600 font-semibold mb-1">待处理订单</p>
               <p className="text-3xl font-bold">{orders.filter(o => o.status === "PENDING").length}</p>
+            </div>
+            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+              <p className="text-sm text-blue-600 font-semibold mb-1">处理中订单</p>
+              <p className="text-3xl font-bold">{orders.filter(o => o.status === "PROCESSING").length}</p>
+            </div>
+            <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
+              <p className="text-sm text-purple-600 font-semibold mb-1">已完成订单</p>
+              <p className="text-3xl font-bold">{orders.filter(o => o.status === "COMPLETED").length}</p>
+            </div>
+            <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+              <p className="text-sm text-red-600 font-semibold mb-1">已取消订单</p>
+              <p className="text-3xl font-bold">{orders.filter(o => o.status === "CANCELLED").length}</p>
             </div>
           </div>
         </div>
@@ -844,16 +872,24 @@ export default function AdminPage() {
                     <div className="text-sm text-gray-500 max-w-xs break-words" title={order.address}>{order.address}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <select
-                      value={order.status}
-                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                      className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 p-1"
-                    >
-                      <option value="PENDING">{t("order.status.PENDING")}</option>
-                      <option value="PROCESSING">{t("order.status.PROCESSING")}</option>
-                      <option value="COMPLETED">{t("order.status.COMPLETED")}</option>
-                      <option value="CANCELLED">{t("order.status.CANCELLED")}</option>
-                    </select>
+                    <div className="flex flex-col gap-2 items-start">
+                      <select
+                        value={order.status}
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                        className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 p-1"
+                      >
+                        <option value="PENDING">{t("order.status.PENDING")}</option>
+                        <option value="PROCESSING">{t("order.status.PROCESSING")}</option>
+                        <option value="COMPLETED">{t("order.status.COMPLETED")}</option>
+                        <option value="CANCELLED">{t("order.status.CANCELLED")}</option>
+                      </select>
+                      <button 
+                        onClick={() => adminDeleteOrder(order.id)} 
+                        className="text-xs text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded"
+                      >
+                        {t("admin.deleteOrder")}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
