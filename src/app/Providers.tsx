@@ -3,7 +3,7 @@
 import { SessionProvider } from "next-auth/react";
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { CartProvider } from "@/components/CartContext";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, PhoneCall, X } from "lucide-react";
 
 type Language = "en" | "zh" | "vi";
 type Currency = "CNY" | "VND";
@@ -66,7 +66,9 @@ const translations: Record<Language, Record<string, string>> = {
     "account.orderedAt": "下单时间",
     "account.notSet": "未设置",
     "account.cancelOrder": "取消订单",
-    "account.contactUs": "在线客服",
+    "account.contactUs": "联系客服 (微信/电话)",
+    "account.chat": "复制微信号并打开",
+    "account.call": "拨打电话",
     "admin.contactInfo": "客服电话设定",
     "admin.dashboard": "管理后台仪表盘",
     "admin.products": "商品管理",
@@ -89,7 +91,7 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.passSuccess": "密码修改成功！",
     "admin.table.date": "日期",
     "admin.table.customer": "用户名",
-    "admin.table.account": "注册账户",
+    "admin.table.account": "注册联系方式(电话/邮箱)",
     "admin.table.contact": "收件电话",
     "admin.table.address": "配送地址",
     "admin.table.product": "商品详情",
@@ -178,7 +180,9 @@ const translations: Record<Language, Record<string, string>> = {
     "account.orderedAt": "Ordered",
     "account.notSet": "N/A",
     "account.cancelOrder": "Cancel Order",
-    "account.contactUs": "Live Chat",
+    "account.contactUs": "Contact Us (WeChat/Call)",
+    "account.chat": "Copy WeChat ID",
+    "account.call": "Call Us",
     "admin.contactInfo": "Support Contact",
     "admin.dashboard": "Admin Dashboard",
     "admin.products": "Manage Products",
@@ -277,7 +281,9 @@ const translations: Record<Language, Record<string, string>> = {
     "account.orderedAt": "Ngày đặt",
     "account.notSet": "Chưa thiết lập",
     "account.cancelOrder": "Hủy đơn hàng",
-    "account.contactUs": "Chat với CSKH",
+    "account.contactUs": "Liên hệ (WeChat/Gọi)",
+    "account.chat": "Sao chép WeChat ID",
+    "account.call": "Gọi điện",
     "admin.contactInfo": "Cài đặt SĐT",
     "account.password": "Đổi mật khẩu",
     "account.oldPassword": "Mật khẩu cũ",
@@ -384,6 +390,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   
   const [supportPhone, setSupportPhone] = useState("");
+  const [showContactMenu, setShowContactMenu] = useState(false);
   
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -460,18 +467,44 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <CartProvider>
           {children}
           {supportPhone && (
-            <a
-              href={`https://wa.me/${supportPhone.replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="fixed bottom-6 right-6 z-50 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-transform hover:scale-110 flex items-center justify-center group"
-              title={t("account.contactUs")}
-            >
-              <MessageCircle className="h-6 w-6" />
-              <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap ml-0 group-hover:ml-2 font-medium">
-                {t("account.contactUs")}
-              </span>
-            </a>
+            <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
+              {showContactMenu && (
+                <div className="bg-white rounded-lg shadow-xl border p-2 mb-4 flex flex-col gap-2 min-w-[160px] animate-bounce-in">
+                  <button
+                    className="flex items-center gap-3 px-4 py-3 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors font-medium text-sm text-left"
+                    onClick={() => {
+                      navigator.clipboard.writeText(supportPhone);
+                      alert(lang === "zh" ? "微信号/电话已复制，正在尝试打开微信..." : lang === "en" ? "WeChat ID copied. Attempting to open WeChat..." : "Đã sao chép WeChat ID. Đang thử mở WeChat...");
+                      setShowContactMenu(false);
+                      window.location.href = "weixin://";
+                    }}
+                  >
+                    <MessageCircle className="h-5 w-5 flex-shrink-0" />
+                    {t("account.chat")}
+                  </button>
+                  <a
+                    href={`tel:${supportPhone}`}
+                    className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors font-medium text-sm text-left"
+                    onClick={() => setShowContactMenu(false)}
+                  >
+                    <PhoneCall className="h-5 w-5 flex-shrink-0" />
+                    {t("account.call")}
+                  </a>
+                </div>
+              )}
+              <button
+                onClick={() => setShowContactMenu(!showContactMenu)}
+                className="bg-green-500 text-white p-4 rounded-full shadow-xl hover:bg-green-600 transition-transform active:scale-95 flex items-center justify-center group"
+                title={t("account.contactUs")}
+              >
+                {showContactMenu ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+                {!showContactMenu && (
+                  <span className="max-w-0 overflow-hidden group-hover:max-w-[150px] transition-all duration-300 ease-in-out whitespace-nowrap ml-0 group-hover:ml-2 font-medium hidden sm:block">
+                    {t("account.contactUs")}
+                  </span>
+                )}
+              </button>
+            </div>
           )}
         </CartProvider>
       </AppContext.Provider>

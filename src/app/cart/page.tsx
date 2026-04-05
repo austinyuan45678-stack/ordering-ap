@@ -44,13 +44,16 @@ export default function CartPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to order");
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to order");
+      }
 
       alert(t("order.success"));
       clearCart();
       router.push("/account");
-    } catch (error) {
-      alert(t("product.orderError"));
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      alert(`${t("product.orderError")}: ${error.message}`);
     } finally {
       setLoading(false);
     }

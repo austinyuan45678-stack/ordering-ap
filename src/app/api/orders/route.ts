@@ -18,6 +18,20 @@ export async function POST(req: Request) {
       return new NextResponse("Missing fields", { status: 400 });
     }
 
+    // Verify all products exist and have enough stock
+    for (const item of items) {
+      const product = await prisma.product.findUnique({ where: { id: item.productId } });
+      if (!product) {
+        return new NextResponse(`Product no longer exists: ${item.name || item.productId}`, { status: 400 });
+      }
+      if (!product.isAvailable) {
+        return new NextResponse(`Product is no longer available: ${product.name}`, { status: 400 });
+      }
+      if (product.stock < item.quantity) {
+        return new NextResponse(`Not enough stock for: ${product.name}. Only ${product.stock} left.`, { status: 400 });
+      }
+    }
+
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,

@@ -39,27 +39,29 @@ export default function StaffPage() {
   useEffect(() => {
     if (session?.user.role !== "STAFF" && session?.user.role !== "ADMIN") return;
     
-    fetch("/api/orders").then(res => res.json()).then(data => {
+    fetch(`/api/orders?t=${Date.now()}`, { cache: "no-store" }).then(res => res.json()).then(data => {
       prevOrderCountRef.current = data.length;
     });
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/orders");
+        const res = await fetch(`/api/orders?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         
         if (data.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
+          const userName = data[0]?.user?.name || "未知用户";
+          
           if ('speechSynthesis' in window) {
-            const userName = data[0]?.user?.name || "未知用户";
             const msg = new SpeechSynthesisUtterance(`用户 ${userName} 已经下单，请及时处理`);
             msg.lang = 'zh-CN';
             window.speechSynthesis.speak(msg);
-            
-            // Show toast notification
-            setNewOrderNotification({ show: true, name: userName });
-            // Auto hide after 15 seconds
-            setTimeout(() => setNewOrderNotification({ show: false, name: "" }), 15000);
           }
+          
+          // Show toast notification
+          setNewOrderNotification({ show: true, name: userName });
+          // Auto hide after 15 seconds
+          setTimeout(() => setNewOrderNotification({ show: false, name: "" }), 15000);
+
           setOrders(data);
         }
         prevOrderCountRef.current = data.length;

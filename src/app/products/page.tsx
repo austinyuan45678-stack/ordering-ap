@@ -33,7 +33,7 @@ export default function ProductsPage() {
     }
     addToCart(product, 1);
     setAddingId(product.id);
-    setTimeout(() => setAddingId(null), 600);
+    setTimeout(() => setAddingId(null), 300);
   };
 
   return (
@@ -74,8 +74,8 @@ export default function ProductsPage() {
               </div>
               <button
                 onClick={() => handleAddToCart(product)}
-                disabled={addingId === product.id || product.stock <= 0}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition disabled:bg-gray-400 whitespace-nowrap flex-1 sm:flex-none text-center font-medium shadow-sm"
+                disabled={product.stock <= 0}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition disabled:bg-gray-400 whitespace-nowrap flex-1 sm:flex-none text-center font-medium shadow-sm active:scale-95"
               >
                 {product.stock <= 0 ? t("product.outOfStock") : (addingId === product.id ? t("cart.itemAdd") : t("cart.add"))}
               </button>
