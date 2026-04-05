@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import fs from "fs/promises";
-import path from "path";
+import { put } from '@vercel/blob';
 
 export async function POST(req: Request) {
   try {
@@ -19,19 +18,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Upload to Vercel Blob
+    const blob = await put(file.name, file, {
+      access: 'public',
+    });
 
-    // Write file
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    const fileName = `${Date.now()}-${file.name.replace(/\s/g, "_")}`;
-    const filePath = path.join(uploadDir, fileName);
-
-    await fs.writeFile(filePath, buffer);
-
-    return NextResponse.json({ success: true, url: `/uploads/${fileName}` });
+    return NextResponse.json({ success: true, url: blob.url });
   } catch (error) {
     console.error("UPLOAD_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });
