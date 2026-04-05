@@ -430,6 +430,23 @@ export default function AdminPage() {
                             >
                               {product.isAvailable ? t("admin.unlist") : t("admin.relist")}
                             </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {products.length === 0 && (
+                <div className="col-span-2 text-center py-10 text-gray-500 bg-white rounded-lg border border-dashed">
+                  {t("general.noData")}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === "stats" && (
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-bold mb-6">{t("account.stats")}</h2>
@@ -446,65 +463,6 @@ export default function AdminPage() {
             <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
               <p className="text-sm text-yellow-600 font-semibold mb-1">待处理 (Pending)</p>
               <p className="text-3xl font-bold">{orders.filter(o => o.status === "PENDING").length}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === "users" && (
-        <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">注册时间</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">身份/名字</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">联系方式 (Email/Phone)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">订单总数</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{u.name || t("general.user")}</div>
-                    <div className="text-xs text-gray-500">{u.role}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {u.email || u.phone || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                    {u._count?.orders || 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button 
-                      onClick={() => adminChangePassword(u.id)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      {t("account.password")}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {products.length === 0 && (
-                <div className="col-span-2 text-center py-10 text-gray-500 bg-white rounded-lg border border-dashed">
-                  {t("general.noData")}
-                </div>
-              )}
             </div>
           </div>
         </div>
