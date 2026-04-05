@@ -79,47 +79,6 @@ export default function AdminPage() {
     }
   }, [activeTab, session]);
 
-  // Voice Notification Polling
-  useEffect(() => {
-    if (session?.user.role !== "ADMIN") return;
-    
-    // Initial fetch to get baseline order count
-    fetch(`/api/orders?t=${Date.now()}`, { cache: "no-store" }).then(res => res.json()).then(data => {
-      prevOrderCountRef.current = data.length;
-    });
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/orders?t=${Date.now()}`, { cache: "no-store" });
-        const data = await res.json();
-        
-        if (data.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
-          const userName = data[0]?.user?.name || "未知用户";
-          
-          if ('speechSynthesis' in window) {
-            const msg = new SpeechSynthesisUtterance(`用户 ${userName} 已经下单，请及时处理`);
-            msg.lang = 'zh-CN';
-            window.speechSynthesis.speak(msg);
-          }
-          
-          // Show toast notification
-          setNewOrderNotification({ show: true, name: userName });
-          // Auto hide after 15 seconds
-          setTimeout(() => setNewOrderNotification({ show: false, name: "" }), 15000);
-
-          if (activeTab === "orders" || activeTab === "stats") {
-            setOrders(data);
-          }
-        }
-        prevOrderCountRef.current = data.length;
-      } catch (err) {
-        console.error(err);
-      }
-    }, 10000); // Check every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [session, activeTab]);
-
   const handleSaveSupportPhone = async () => {
     try {
       const res = await fetch("/api/settings", {
@@ -407,29 +366,6 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      {newOrderNotification.show && (
-        <div className="fixed top-4 right-4 z-[9999] bg-white border-l-4 border-blue-500 rounded shadow-lg p-4 max-w-sm animate-bounce-in">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <h3 className="text-blue-600 font-bold">{t("admin.newOrderAlert")}</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                {t("admin.newOrderDesc").replace("{name}", newOrderNotification.name)}
-              </p>
-            </div>
-            <button onClick={() => setNewOrderNotification({ show: false, name: "" })} className="text-gray-400 hover:text-gray-600 ml-2">✕</button>
-          </div>
-          <button 
-            onClick={() => {
-              setActiveTab("orders");
-              setNewOrderNotification({ show: false, name: "" });
-            }} 
-            className="mt-3 text-sm bg-blue-50 text-blue-600 font-medium px-3 py-1.5 rounded hover:bg-blue-100"
-          >
-            {t("admin.viewOrder")}
-          </button>
-        </div>
-      )}
-
       <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <h1 className="text-3xl font-bold">{t("admin.dashboard")}</h1>
         <div className="flex space-x-2 sm:space-x-4">

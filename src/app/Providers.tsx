@@ -383,6 +383,100 @@ export function useApp() {
 // but we will update them to use useApp.
 export const useI18n = useApp;
 
+import { useSession, signOut } from "next-auth/react";
+import { useRef } from "react";
+
+function GlobalFeatures() {
+  const { data: session, status } = useSession();
+  const prevOrderCountRef = useRef(0);
+  const [newOrderNotification, setNewOrderNotification] = useState<{show: boolean, name: string}>({show: false, name: ""});
+  const { t } = useApp();
+
+  // Auto Logout on browser close (using sessionStorage)
+  useEffect(() => {
+    if (status === "loading") return;
+    if (session?.user) {
+      const isTabSessionActive = sessionStorage.getItem("is_active_session");
+      if (!isTabSessionActive) {
+        // If this is a new tab/window without the session storage flag, log out immediately
+        signOut({ redirect: false }).then(() => {
+          window.location.href = "/login";
+        });
+      } else {
+        // Keep it active
+        sessionStorage.setItem("is_active_session", "true");
+      }
+    }
+  }, [session, status]);
+
+  // Make sure we mark session on login too, so we listen to it globally
+  useEffect(() => {
+    if (session?.user) {
+      sessionStorage.setItem("is_active_session", "true");
+    }
+  }, [session]);
+
+  // Global Voice & Toast Notification for Orders
+  useEffect(() => {
+    if (session?.user.role !== "ADMIN" && session?.user.role !== "STAFF") return;
+    
+    // Initial fetch to get baseline order count
+    fetch(`/api/orders?t=${Date.now()}`, { cache: "no-store" }).then(res => res.json()).then(data => {
+      prevOrderCountRef.current = data?.length || 0;
+    }).catch(() => {});
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/orders?t=${Date.now()}`, { cache: "no-store" });
+        const data = await res.json();
+        
+        if (data && Array.isArray(data) && data.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
+          const userName = data[0]?.user?.name || "未知用户";
+          
+          if ('speechSynthesis' in window) {
+            const msg = new SpeechSynthesisUtterance(`用户 ${userName} 已经下单，请及时处理`);
+            msg.lang = 'zh-CN';
+            window.speechSynthesis.speak(msg);
+          }
+          
+          setNewOrderNotification({ show: true, name: userName });
+          setTimeout(() => setNewOrderNotification({ show: false, name: "" }), 15000);
+        }
+        if (data && Array.isArray(data)) {
+          prevOrderCountRef.current = data.length;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [session]);
+
+  if (!newOrderNotification.show) return null;
+
+  return (
+    <div className="fixed top-4 right-4 z-[9999] bg-white border-l-4 border-blue-500 rounded shadow-lg p-4 max-w-sm animate-bounce-in">
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <h3 className="text-blue-600 font-bold">{t("admin.newOrderAlert") || "新订单提醒"}</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {(t("admin.newOrderDesc") || "用户 {name} 刚刚下了一个新订单！请及时处理。").replace("{name}", newOrderNotification.name)}
+          </p>
+        </div>
+        <button onClick={() => setNewOrderNotification({ show: false, name: "" })} className="text-gray-400 hover:text-gray-600 ml-2">✕</button>
+      </div>
+      <a 
+        href={session?.user.role === "ADMIN" ? "/admin" : "/staff"}
+        onClick={() => setNewOrderNotification({ show: false, name: "" })} 
+        className="mt-3 text-sm bg-blue-50 text-blue-600 font-medium px-3 py-1.5 rounded hover:bg-blue-100 inline-block"
+      >
+        {t("admin.viewOrder") || "去查看"}
+      </a>
+    </div>
+  );
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Language>("zh");
   const [currency, setCurrency] = useState<Currency>("CNY");
@@ -464,6 +558,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE, getProductName, getProductDesc, getProductUnit }}>
+        <GlobalFeatures />
         <CartProvider>
           {children}
           {supportPhone && (
