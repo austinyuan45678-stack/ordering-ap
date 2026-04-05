@@ -38,9 +38,9 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(order);
-  } catch (error) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("ORDERS_POST_ERROR", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse(`Internal Error: ${error.message || "Unknown"}`, { status: 500 });
   }
 }
 
