@@ -114,7 +114,10 @@ export default function AdminPage() {
           method: "POST",
           body: formData,
         });
-        if (!uploadRes.ok) throw new Error("Upload failed");
+        if (!uploadRes.ok) {
+          const errText = await uploadRes.text();
+          throw new Error(`Upload failed: ${errText}`);
+        }
         const uploadData = await uploadRes.json();
         imageUrl = uploadData.url;
       }
@@ -144,8 +147,8 @@ export default function AdminPage() {
       setFile(null);
       fetchData();
       alert(t("admin.addSuccess"));
-    } catch (error) {
-      alert(t("admin.addError"));
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      alert(`${t("admin.addError")}: ${error.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }
@@ -203,7 +206,10 @@ export default function AdminPage() {
           method: "POST",
           body: formData,
         });
-        if (!uploadRes.ok) throw new Error("Upload failed");
+        if (!uploadRes.ok) {
+          const errText = await uploadRes.text();
+          throw new Error(`Upload failed: ${errText}`);
+        }
         const uploadData = await uploadRes.json();
         imageUrl = uploadData.url;
       }
@@ -220,8 +226,8 @@ export default function AdminPage() {
       setEditingProductId(null);
       setEditFile(null);
       fetchData();
-    } catch (error) {
-      alert(t("admin.updatePriceError"));
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      alert(`${t("admin.updatePriceError")}: ${error.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }
