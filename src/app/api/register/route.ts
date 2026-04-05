@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     const { account, password, name } = await req.json();
 
     if (!account || !password) {
-      return new NextResponse("Missing fields", { status: 400 });
+      return new NextResponse("请填写完整信息 / Vui lòng điền đầy đủ thông tin", { status: 400 });
     }
 
     const exist = await prisma.user.findFirst({
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     });
 
     if (exist) {
-      return new NextResponse("Account already exists", { status: 400 });
+      return new NextResponse("账号已存在 / Tài khoản đã tồn tại", { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -39,6 +39,6 @@ export async function POST(req: Request) {
     return NextResponse.json(user);
   } catch (error) {
     console.error("REGISTER_ERROR", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("系统错误，请重试 / Lỗi hệ thống, vui lòng thử lại", { status: 500 });
   }
 }

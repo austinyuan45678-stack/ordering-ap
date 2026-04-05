@@ -260,8 +260,8 @@ export default function AdminPage() {
   };
 
   const adminChangePassword = async (userId: string) => {
-    const newPassword = prompt("请输入该用户的新密码 (至少6位):");
-    if (!newPassword || newPassword.length < 6) return alert("密码太短");
+    const newPassword = prompt(t("admin.promptNewPass") || "请输入该用户的新密码 (至少6位):");
+    if (!newPassword || newPassword.length < 6) return alert(t("admin.passTooShort") || "密码太短");
 
     try {
       const res = await fetch(`/api/users/${userId}/password`, {
@@ -270,12 +270,13 @@ export default function AdminPage() {
         body: JSON.stringify({ newPassword }),
       });
       if (res.ok) {
-        alert("密码修改成功！");
+        alert(t("admin.passSuccess") || "密码修改成功！");
       } else {
-        alert("修改失败");
+        const errText = await res.text();
+        alert(errText || "修改失败");
       }
     } catch (error) {
-      alert("Error");
+      alert("网络错误，请稍后再试 / Lỗi mạng");
     }
   };
 

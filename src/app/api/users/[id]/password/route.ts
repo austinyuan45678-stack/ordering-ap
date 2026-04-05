@@ -23,18 +23,18 @@ export async function PATCH(
     const { newPassword, oldPassword } = body;
 
     if (!newPassword || newPassword.length < 6) {
-      return new NextResponse("Password too short", { status: 400 });
+      return new NextResponse("新密码至少需要6位 / Mật khẩu mới phải có ít nhất 6 ký tự", { status: 400 });
     }
 
     // If it's a regular user changing their own password, verify old password
     if (session.user.role !== "ADMIN") {
-      if (!oldPassword) return new NextResponse("Old password required", { status: 400 });
+      if (!oldPassword) return new NextResponse("请输入旧密码 / Vui lòng nhập mật khẩu cũ", { status: 400 });
       
       const user = await prisma.user.findUnique({ where: { id } });
-      if (!user) return new NextResponse("User not found", { status: 404 });
+      if (!user) return new NextResponse("用户不存在 / Không tìm thấy người dùng", { status: 404 });
 
       const isValid = await bcrypt.compare(oldPassword, user.password);
-      if (!isValid) return new NextResponse("Invalid old password", { status: 400 });
+      if (!isValid) return new NextResponse("旧密码错误 / Mật khẩu cũ không chính xác", { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -47,6 +47,6 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("PASSWORD_UPDATE_ERROR", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("修改失败，请重试 / Thay đổi thất bại, vui lòng thử lại", { status: 500 });
   }
 }

@@ -49,7 +49,7 @@ export default function AccountPage() {
         alert(text);
       }
     } catch (err) {
-      alert("Error");
+      alert("网络错误，请稍后再试 / Lỗi mạng, vui lòng thử lại sau");
     } finally {
       setPassLoading(false);
     }
@@ -84,7 +84,7 @@ export default function AccountPage() {
             <form onSubmit={handlePasswordChange} className="space-y-3">
               <input
                 type="password"
-                placeholder="Old Password"
+                placeholder={t("account.oldPassword") || "旧密码 / Mật khẩu cũ"}
                 required
                 value={oldPassword}
                 onChange={e => setOldPassword(e.target.value)}
@@ -92,7 +92,7 @@ export default function AccountPage() {
               />
               <input
                 type="password"
-                placeholder="New Password"
+                placeholder={t("account.newPassword") || "新密码 / Mật khẩu mới"}
                 required
                 minLength={6}
                 value={newPassword}
