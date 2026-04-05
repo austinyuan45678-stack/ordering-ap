@@ -8,6 +8,9 @@ import { useRouter } from "next/navigation";
 export default function AccountPage() {
   const { data: session, status } = useSession();
   const [orders, setOrders] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passLoading, setPassLoading] = useState(false);
   const router = useRouter();
   const { t, formatPrice } = useApp();
 
@@ -25,6 +28,33 @@ export default function AccountPage() {
     }
   }, [session]);
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user) return;
+    setPassLoading(true);
+
+    try {
+      const res = await fetch(`/api/users/${session.user.id}/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+
+      if (res.ok) {
+        alert(t("admin.addSuccess") || "Success");
+        setOldPassword("");
+        setNewPassword("");
+      } else {
+        const text = await res.text();
+        alert(text);
+      }
+    } catch (err) {
+      alert("Error");
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
   if (status === "loading") {
     return <div>Loading...</div>;
   }
@@ -37,15 +67,44 @@ export default function AccountPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h1 className="text-2xl font-bold mb-4">{t("account.title")}</h1>
-        <p className="text-gray-600">
-          <strong>{t("account.name")}:</strong> {session.user.name || t("account.notSet")}
-        </p>
-        <p className="text-gray-600">
-          <strong>{t("account.contact")}:</strong> {session.user.email || session.user.phone || t("account.notSet")}
-        </p>
-        <p className="text-gray-600">
-          <strong>{t("account.role")}:</strong> {session.user.role}
-        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <p className="text-gray-600">
+              <strong>{t("account.name")}:</strong> {session.user.name || t("account.notSet")}
+            </p>
+            <p className="text-gray-600 mt-2">
+              <strong>{t("account.contact")}:</strong> {session.user.email || session.user.phone || t("account.notSet")}
+            </p>
+            <p className="text-gray-600 mt-2">
+              <strong>{t("account.role")}:</strong> {session.user.role}
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">{t("account.password")}</h3>
+            <form onSubmit={handlePasswordChange} className="space-y-3">
+              <input
+                type="password"
+                placeholder="Old Password"
+                required
+                value={oldPassword}
+                onChange={e => setOldPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md text-sm"
+              />
+              <input
+                type="password"
+                placeholder="New Password"
+                required
+                minLength={6}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md text-sm"
+              />
+              <button disabled={passLoading} type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 w-full disabled:opacity-50">
+                {passLoading ? t("general.loading") : t("admin.save")}
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -55,14 +114,23 @@ export default function AccountPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <div key={order.id} className="bg-white rounded-lg shadow-sm border p-4 flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold">{order.product.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{t("product.price")}: {formatPrice(order.product.price)}</p>
-                  <p className="text-sm text-gray-600">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleDateString()}</p>
+              <div key={order.id} className="bg-white rounded-lg shadow-sm border p-4 flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div className="flex-1">
+                  <div className="space-y-2 mb-3">
+                    {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span className="font-bold">{item.product.name} (x{item.quantity})</span>
+                        <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t pt-2 mt-2">
+                    <p className="text-sm font-semibold text-gray-800">{t("cart.total")}: {formatPrice(order.totalAmount)}</p>
+                    <p className="text-xs text-gray-500 mt-1">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleString()}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                <div className="sm:text-right w-full sm:w-auto">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${
                     order.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
                     order.status === "COMPLETED" ? "bg-green-100 text-green-800" :
                     "bg-blue-100 text-blue-800"

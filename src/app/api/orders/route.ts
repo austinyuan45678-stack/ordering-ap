@@ -12,19 +12,29 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { productId, address, phone } = body;
+    const { items, address, phone, totalAmount } = body;
 
-    if (!productId || !address || !phone) {
+    if (!items || !items.length || !address || !phone) {
       return new NextResponse("Missing fields", { status: 400 });
     }
 
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
-        productId,
         address,
         phone,
+        totalAmount,
+        items: {
+          create: items.map((item: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price
+          }))
+        }
       },
+      include: {
+        items: true
+      }
     });
 
     return NextResponse.json(order);
@@ -44,13 +54,17 @@ export async function GET() {
 
     const isAdmin = session.user.role === "ADMIN";
 
+    const isStaff = session.user.role === "STAFF";
+
     let orders;
 
-    if (isAdmin) {
+    if (isAdmin || isStaff) {
       orders = await prisma.order.findMany({
         include: {
           user: true,
-          product: true,
+          items: {
+            include: { product: true }
+          },
         },
         orderBy: {
           createdAt: "desc",
@@ -62,7 +76,9 @@ export async function GET() {
           userId: session.user.id,
         },
         include: {
-          product: true,
+          items: {
+            include: { product: true }
+          },
         },
         orderBy: {
           createdAt: "desc",

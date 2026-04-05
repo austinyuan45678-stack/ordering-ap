@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import React, { createContext, useState, useContext, useEffect } from "react";
+import { CartProvider } from "@/components/CartContext";
 
 type Language = "en" | "zh";
 type Currency = "CNY" | "VND";
@@ -44,6 +45,17 @@ const translations: Record<Language, Record<string, string>> = {
     "account.contact": "邮箱 / 手机号",
     "account.role": "角色权限",
     "account.orders": "我的订单记录",
+    "account.password": "修改密码",
+    "account.stats": "账单统计",
+    "admin.users": "用户管理",
+    "admin.staff": "员工后台",
+    "cart.title": "购物车",
+    "cart.empty": "您的购物车是空的",
+    "cart.total": "总计",
+    "cart.checkout": "去结算",
+    "cart.add": "加入购物车",
+    "cart.itemAdd": "已加入购物车",
+    "cart.quantity": "数量",
     "account.noOrders": "您还没有任何订单记录。",
     "account.orderedAt": "下单时间",
     "account.notSet": "未设置",
@@ -116,6 +128,17 @@ const translations: Record<Language, Record<string, string>> = {
     "account.contact": "Email / Phone",
     "account.role": "Role",
     "account.orders": "Your Orders",
+    "account.password": "Change Password",
+    "account.stats": "Billing Stats",
+    "admin.users": "User Management",
+    "admin.staff": "Staff Dashboard",
+    "cart.title": "Shopping Cart",
+    "cart.empty": "Your cart is empty",
+    "cart.total": "Total",
+    "cart.checkout": "Checkout",
+    "cart.add": "Add to Cart",
+    "cart.itemAdd": "Added to Cart",
+    "cart.quantity": "Quantity",
     "account.noOrders": "You have no orders yet.",
     "account.orderedAt": "Ordered",
     "account.notSet": "N/A",
@@ -238,7 +261,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE }}>
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </AppContext.Provider>
     </SessionProvider>
   );

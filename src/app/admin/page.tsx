@@ -13,7 +13,8 @@ export default function AdminPage() {
 
   const [products, setProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [activeTab, setActiveTab] = useState<"products" | "bulkAdd" | "orders">("products");
+  const [users, setUsers] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [activeTab, setActiveTab] = useState<"products" | "bulkAdd" | "orders" | "users" | "stats">("products");
 
   // Product form
   const [name, setName] = useState("");
@@ -44,10 +45,14 @@ export default function AdminPage() {
       const res = await fetch("/api/products", { cache: "no-store" });
       const data = await res.json();
       setProducts(data);
-    } else {
+    } else if (activeTab === "orders" || activeTab === "stats") {
       const res = await fetch("/api/orders", { cache: "no-store" });
       const data = await res.json();
       setOrders(data);
+    } else if (activeTab === "users") {
+      const res = await fetch("/api/users", { cache: "no-store" });
+      const data = await res.json();
+      setUsers(data);
     }
   };
 
@@ -226,6 +231,26 @@ export default function AdminPage() {
     }
   };
 
+  const adminChangePassword = async (userId: string) => {
+    const newPassword = prompt("请输入该用户的新密码 (至少6位):");
+    if (!newPassword || newPassword.length < 6) return alert("密码太短");
+
+    try {
+      const res = await fetch(`/api/users/${userId}/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }),
+      });
+      if (res.ok) {
+        alert("密码修改成功！");
+      } else {
+        alert("修改失败");
+      }
+    } catch (error) {
+      alert("Error");
+    }
+  };
+
   if (status === "loading" || !session || session.user.role !== "ADMIN") {
     return <div className="text-center py-20">{t("general.loading")}</div>;
   }
@@ -258,6 +283,22 @@ export default function AdminPage() {
             }`}
           >
             {t("admin.orders")}
+          </button>
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`px-3 py-2 rounded-md font-medium transition ${
+              activeTab === "users" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            {t("admin.users")}
+          </button>
+          <button
+            onClick={() => setActiveTab("stats")}
+            className={`px-3 py-2 rounded-md font-medium transition ${
+              activeTab === "stats" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            {t("account.stats")}
           </button>
         </div>
       </div>
@@ -389,7 +430,70 @@ export default function AdminPage() {
                             >
                               {product.isAvailable ? t("admin.unlist") : t("admin.relist")}
                             </button>
-                          </div>
+      {activeTab === "stats" && (
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <h2 className="text-xl font-bold mb-6">{t("account.stats")}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+              <p className="text-sm text-blue-600 font-semibold mb-1">总订单数 (Total Orders)</p>
+              <p className="text-3xl font-bold">{orders.length}</p>
+            </div>
+            <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
+              <p className="text-sm text-green-600 font-semibold mb-1">总收入 (Total Revenue)</p>
+              <p className="text-3xl font-bold">{formatPrice(orders.filter(o => o.status === "COMPLETED").reduce((sum, o) => sum + o.totalAmount, 0))}</p>
+              <p className="text-xs text-green-700 mt-1">*仅计算已完成的订单</p>
+            </div>
+            <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
+              <p className="text-sm text-yellow-600 font-semibold mb-1">待处理 (Pending)</p>
+              <p className="text-3xl font-bold">{orders.filter(o => o.status === "PENDING").length}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "users" && (
+        <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">注册时间</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">身份/名字</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">联系方式 (Email/Phone)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">订单总数</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{u.name || t("general.user")}</div>
+                    <div className="text-xs text-gray-500">{u.role}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {u.email || u.phone || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                    {u._count?.orders || 0}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <button 
+                      onClick={() => adminChangePassword(u.id)}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      {t("account.password")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
                         </div>
                       )}
                     </div>
@@ -449,16 +553,22 @@ export default function AdminPage() {
                     {new Date(order.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{order.user.name || "N/A"}</div>
+                    <div className="text-sm font-medium text-gray-900">{order.user.name || t("general.user")}</div>
                     <div className="text-sm text-gray-500">{order.user.email || order.user.phone}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{order.product.name}</div>
-                    <div className="text-sm text-gray-500">{formatPrice(order.product.price)}</div>
+                  <td className="px-6 py-4">
+                    <ul className="list-disc pl-4">
+                      {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                        <li key={item.id} className="text-sm text-gray-900 whitespace-normal">
+                          {item.product.name} (x{item.quantity})
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="text-sm font-bold mt-1 text-blue-600">{t("cart.total")}: {formatPrice(order.totalAmount)}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">{order.phone}</div>
-                    <div className="text-sm text-gray-500 max-w-xs truncate" title={order.address}>{order.address}</div>
+                    <div className="text-sm text-gray-500 max-w-xs break-words" title={order.address}>{order.address}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <select
