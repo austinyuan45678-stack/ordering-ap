@@ -9,7 +9,7 @@ import Image from "next/image";
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { t, formatPrice, currency, exchangeRate } = useApp();
+  const { t, formatPrice, currency, exchangeRate, getProductName } = useApp();
 
   const [products, setProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -18,7 +18,9 @@ export default function AdminPage() {
 
   // Product form
   const [name, setName] = useState("");
+  const [nameVi, setNameVi] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionVi, setDescriptionVi] = useState("");
   const [price, setPrice] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,7 @@ export default function AdminPage() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editPriceValue, setEditPriceValue] = useState("");
   const [editNameValue, setEditNameValue] = useState("");
+  const [editNameViValue, setEditNameViValue] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
 
   const prevOrderCountRef = useRef(0);
@@ -123,7 +126,9 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          nameVi,
           description,
+          descriptionVi,
           price: finalPrice,
           imageUrl,
         }),
@@ -132,7 +137,9 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to add product");
 
       setName("");
+      setNameVi("");
       setDescription("");
+      setDescriptionVi("");
       setPrice("");
       setFile(null);
       fetchData();
@@ -152,12 +159,14 @@ export default function AdminPage() {
     try {
       const lines = bulkText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
       const parsedProducts = lines.map(line => {
-        const [pName, pDesc, pPrice, pImg] = line.split(",");
+        const [pName, pDesc, pPrice, pImg, pNameVi, pDescVi] = line.split(",");
         const parsedPrice = parseFloat(pPrice?.trim() || "0");
         const finalPrice = currency === "VND" ? parsedPrice / exchangeRate : parsedPrice;
         return {
           name: pName?.trim(),
+          nameVi: pNameVi?.trim() || "",
           description: pDesc?.trim() || "",
+          descriptionVi: pDescVi?.trim() || "",
           price: finalPrice,
           imageUrl: pImg?.trim() || "",
         };
@@ -204,7 +213,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ price: finalPrice, name: editNameValue, ...(imageUrl && { imageUrl }) }),
+        body: JSON.stringify({ price: finalPrice, name: editNameValue, nameVi: editNameViValue, ...(imageUrl && { imageUrl }) }),
       });
       if (!res.ok) throw new Error("Failed to update product");
       
@@ -337,12 +346,31 @@ export default function AdminPage() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.nameVi")}</label>
+                <input
+                  value={nameVi}
+                  onChange={(e) => setNameVi(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Tên tiếng Việt"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.desc")}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md"
-                  rows={3}
+                  rows={2}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t("product.descVi")}</label>
+                <textarea
+                  value={descriptionVi}
+                  onChange={(e) => setDescriptionVi(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  rows={2}
+                  placeholder="Mô tả tiếng Việt"
                 />
               </div>
               <div>
@@ -407,27 +435,38 @@ export default function AdminPage() {
                       )}
                     </div>
                   )}
-                  <div className="flex flex-col justify-between w-full">
+                    <div className="flex flex-col justify-between w-full">
                     <div>
-                      <div className="flex justify-between items-start w-full">
+                      <div className="flex flex-col justify-between items-start w-full mb-1">
                         {editingProductId === product.id ? (
+                          <div className="flex flex-col space-y-1 w-full mr-2">
                             <input
                               type="text"
                               value={editNameValue}
                               onChange={(e) => setEditNameValue(e.target.value)}
-                              className="px-2 py-1 border rounded text-sm w-full mr-2"
+                              className="px-2 py-1 border rounded text-sm w-full"
                               placeholder={t("product.name")}
                             />
+                            <input
+                              type="text"
+                              value={editNameViValue}
+                              onChange={(e) => setEditNameViValue(e.target.value)}
+                              className="px-2 py-1 border rounded text-sm w-full"
+                              placeholder={t("product.nameVi")}
+                            />
+                          </div>
                         ) : (
-                          <h3 className="font-bold pr-2">{product.name}</h3>
-                        )}
-                        {!product.isAvailable && (
-                          <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full whitespace-nowrap">
-                            {t("admin.unlist")}
-                          </span>
+                          <div className="flex justify-between w-full">
+                            <h3 className="font-bold pr-2">{product.name} {product.nameVi && <span className="text-sm font-normal text-gray-500">({product.nameVi})</span>}</h3>
+                            {!product.isAvailable && (
+                              <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full whitespace-nowrap h-fit">
+                                {t("admin.unlist")}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+                      {editingProductId !== product.id && <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>}
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       {editingProductId === product.id ? (
@@ -450,6 +489,7 @@ export default function AdminPage() {
                               onClick={() => {
                                 setEditingProductId(product.id);
                                 setEditNameValue(product.name);
+                                setEditNameViValue(product.nameVi || "");
                                 const displayPrice = currency === "VND" ? (product.price * exchangeRate) : product.price;
                                 setEditPriceValue(displayPrice.toString());
                               }}
@@ -551,7 +591,7 @@ export default function AdminPage() {
                     <ul className="list-disc pl-4">
                       {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                         <li key={item.id} className="text-sm text-gray-900 whitespace-normal">
-                          {item.product.name} (x{item.quantity})
+                          {getProductName(item.product)} (x{item.quantity})
                         </li>
                       ))}
                     </ul>

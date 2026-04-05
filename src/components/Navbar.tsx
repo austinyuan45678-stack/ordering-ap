@@ -61,7 +61,10 @@ export default function Navbar() {
               <span className="hidden sm:inline">{currency}</span>
             </button>
             <button
-              onClick={() => setLang(lang === "en" ? "zh" : "en")}
+              onClick={() => {
+                const nextLang = lang === "zh" ? "en" : lang === "en" ? "vi" : "zh";
+                setLang(nextLang);
+              }}
               className="text-gray-500 hover:text-gray-700 flex items-center p-2"
               title="Change Language"
             >

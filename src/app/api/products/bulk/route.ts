@@ -20,7 +20,9 @@ export async function POST(req: Request) {
     await prisma.product.createMany({
       data: body.map((item: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
         name: item.name,
+        nameVi: item.nameVi || null,
         description: item.description || "",
+        descriptionVi: item.descriptionVi || null,
         price: parseFloat(item.price) || 0,
         imageUrl: item.imageUrl || null,
       })),

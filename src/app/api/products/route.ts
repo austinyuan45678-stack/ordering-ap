@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { name, description, price, imageUrl } = await req.json();
+    const { name, nameVi, description, descriptionVi, price, imageUrl } = await req.json();
 
     if (!name || !price) {
       return new NextResponse("Missing fields", { status: 400 });
@@ -38,7 +38,9 @@ export async function POST(req: Request) {
     const product = await prisma.product.create({
       data: {
         name,
+        nameVi: nameVi || null,
         description,
+        descriptionVi: descriptionVi || null,
         price: parseFloat(price),
         imageUrl,
       },

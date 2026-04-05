@@ -4,7 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { CartProvider } from "@/components/CartContext";
 
-type Language = "en" | "zh";
+type Language = "en" | "zh" | "vi";
 type Currency = "CNY" | "VND";
 type PriceMode = "SINGLE" | "DUAL";
 
@@ -18,6 +18,8 @@ interface AppContextType {
   setPriceMode: (mode: PriceMode) => void;
   formatPrice: (priceCny: number) => string;
   exchangeRate: number;
+  getProductName: (product: any) => string;
+  getProductDesc: (product: any) => string;
 }
 
 const translations: Record<Language, Record<string, string>> = {
@@ -64,7 +66,7 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.orders": "订单管理",
     "admin.addProduct": "添加商品",
     "admin.bulkAdd": "批量添加",
-    "admin.bulkAddDesc": "每行一个商品，格式：名称,描述,价格({currency}),图片链接",
+    "admin.bulkAddDesc": "每行一个商品，格式：中文名,中文描述,价格({currency}),图片链接,越南语名,越南语描述",
     "admin.addBtn": "确认添加",
     "admin.status": "状态",
     "admin.edit": "编辑",
@@ -80,13 +82,15 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.addError": "添加失败，请重试",
     "admin.bulkSuccess": "批量添加成功！",
     "admin.bulkError": "批量添加失败，请检查格式。",
-    "admin.updatePriceError": "更新价格失败",
+    "admin.updatePriceError": "更新失败",
     "admin.updateAvailError": "更新上架状态失败",
     "admin.updateStatusError": "更新订单状态失败",
     "product.price": "价格",
     "product.order": "立即下单",
-    "product.name": "商品名称",
-    "product.desc": "商品描述",
+    "product.name": "中文名称",
+    "product.nameVi": "越南语名称",
+    "product.desc": "中文描述",
+    "product.descVi": "越南语描述",
     "product.image": "商品图片",
     "product.noImage": "暂无图片",
     "product.orderTitle": "提交订单",
@@ -147,7 +151,7 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.orders": "View Orders",
     "admin.addProduct": "Add Product",
     "admin.bulkAdd": "Bulk Add",
-    "admin.bulkAddDesc": "One product per line: Name,Description,Price({currency}),ImageUrl",
+    "admin.bulkAddDesc": "One product per line: NameZH,DescZH,Price({currency}),ImageUrl,NameVI,DescVI",
     "admin.addBtn": "Add",
     "admin.status": "Status",
     "admin.edit": "Edit",
@@ -163,13 +167,15 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.addError": "Error adding product",
     "admin.bulkSuccess": "Bulk add successful!",
     "admin.bulkError": "Error in bulk add. Please check format.",
-    "admin.updatePriceError": "Error updating price",
+    "admin.updatePriceError": "Error updating",
     "admin.updateAvailError": "Error updating availability",
     "admin.updateStatusError": "Failed to update status",
     "product.price": "Price",
     "product.order": "Order Now",
-    "product.name": "Product Name",
-    "product.desc": "Description",
+    "product.name": "Name (ZH)",
+    "product.nameVi": "Name (VI)",
+    "product.desc": "Desc (ZH)",
+    "product.descVi": "Desc (VI)",
     "product.image": "Image",
     "product.noImage": "No Image",
     "product.orderTitle": "Order",
@@ -186,6 +192,91 @@ const translations: Record<Language, Record<string, string>> = {
     "general.loading": "Loading...",
     "general.noData": "No data available",
     "general.user": "User",
+  },
+  vi: {
+    "nav.store": "Đặc sản Việt Nam",
+    "nav.home": "Trang chủ",
+    "nav.products": "Sản phẩm",
+    "nav.account": "Tài khoản",
+    "nav.admin": "Quản trị",
+    "nav.login": "Đăng nhập",
+    "nav.logout": "Đăng xuất",
+    "nav.priceMode.DUAL": "Giá kép",
+    "nav.priceMode.SINGLE": "Giá đơn",
+    "auth.email": "Email",
+    "auth.account": "Email / Số điện thoại",
+    "auth.password": "Mật khẩu",
+    "auth.name": "Tên",
+    "auth.login": "Đăng nhập",
+    "auth.register": "Đăng ký",
+    "auth.noAccount": "Chưa có tài khoản?",
+    "auth.hasAccount": "Đã có tài khoản?",
+    "auth.registering": "Đang đăng ký...",
+    "account.title": "Tài khoản của tôi",
+    "account.name": "Tên",
+    "account.contact": "Email / SĐT",
+    "account.role": "Vai trò",
+    "account.orders": "Lịch sử đơn hàng",
+    "account.noOrders": "Bạn chưa có đơn hàng nào.",
+    "account.orderedAt": "Ngày đặt",
+    "account.notSet": "Chưa thiết lập",
+    "account.password": "Đổi mật khẩu",
+    "account.stats": "Thống kê",
+    "admin.dashboard": "Bảng điều khiển",
+    "admin.users": "Quản lý người dùng",
+    "admin.staff": "Trang nhân viên",
+    "admin.products": "Quản lý sản phẩm",
+    "admin.orders": "Quản lý đơn hàng",
+    "admin.addProduct": "Thêm sản phẩm",
+    "admin.bulkAdd": "Thêm hàng loạt",
+    "admin.bulkAddDesc": "Mỗi dòng 1 sp: Tên(Trung),Mô tả(Trung),Giá({currency}),LinkẢnh,Tên(Việt),Mô tả(Việt)",
+    "admin.addBtn": "Thêm",
+    "admin.status": "Trạng thái",
+    "admin.edit": "Sửa",
+    "admin.save": "Lưu",
+    "admin.cancel": "Hủy",
+    "admin.unlist": "Gỡ xuống",
+    "admin.relist": "Đăng lên",
+    "admin.table.date": "Ngày",
+    "admin.table.customer": "Khách hàng",
+    "admin.table.product": "Sản phẩm",
+    "admin.table.contact": "Liên hệ",
+    "admin.addSuccess": "Thêm thành công!",
+    "admin.addError": "Lỗi khi thêm sản phẩm",
+    "admin.bulkSuccess": "Thêm hàng loạt thành công!",
+    "admin.bulkError": "Lỗi thêm hàng loạt. Vui lòng kiểm tra định dạng.",
+    "admin.updatePriceError": "Lỗi cập nhật",
+    "admin.updateAvailError": "Lỗi cập nhật trạng thái",
+    "admin.updateStatusError": "Lỗi cập nhật trạng thái đơn hàng",
+    "product.price": "Giá",
+    "product.order": "Đặt hàng",
+    "product.name": "Tên (Trung)",
+    "product.nameVi": "Tên (Việt)",
+    "product.desc": "Mô tả (Trung)",
+    "product.descVi": "Mô tả (Việt)",
+    "product.image": "Ảnh",
+    "product.noImage": "Không có ảnh",
+    "product.orderTitle": "Đặt hàng",
+    "product.submitting": "Đang gửi...",
+    "product.orderError": "Lỗi đặt hàng",
+    "order.address": "Địa chỉ giao hàng",
+    "order.phone": "Số điện thoại",
+    "order.submit": "Gửi đơn hàng",
+    "order.success": "Đặt hàng thành công!",
+    "order.status.PENDING": "Đang chờ",
+    "order.status.PROCESSING": "Đang xử lý",
+    "order.status.COMPLETED": "Hoàn thành",
+    "order.status.CANCELLED": "Đã hủy",
+    "general.loading": "Đang tải...",
+    "general.noData": "Không có dữ liệu",
+    "general.user": "Người dùng",
+    "cart.title": "Giỏ hàng",
+    "cart.empty": "Giỏ hàng trống",
+    "cart.total": "Tổng cộng",
+    "cart.checkout": "Thanh toán",
+    "cart.add": "Thêm vào giỏ",
+    "cart.itemAdd": "Đã thêm",
+    "cart.quantity": "Số lượng",
   }
 };
 
@@ -246,6 +337,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const t = (key: string) => translations[lang]?.[key] || key;
 
+  const getProductName = (product: any) => {
+    if (lang === "vi" && product.nameVi) return product.nameVi;
+    return product.name;
+  };
+
+  const getProductDesc = (product: any) => {
+    if (lang === "vi" && product.descriptionVi) return product.descriptionVi;
+    return product.description || "";
+  };
+
   const formatPrice = (priceCny: number) => {
     const priceVnd = priceCny * EXCHANGE_RATE;
     const strCny = `¥${priceCny.toFixed(2)}`;
@@ -260,7 +361,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionProvider>
-      <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE }}>
+      <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE, getProductName, getProductDesc }}>
         <CartProvider>
           {children}
         </CartProvider>

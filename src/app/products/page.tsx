@@ -11,7 +11,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const { data: session } = useSession();
   const router = useRouter();
-  const { t, formatPrice } = useApp();
+  const { t, formatPrice, getProductName, getProductDesc } = useApp();
   const { addToCart } = useCart();
   const [addingId, setAddingId] = useState<string | null>(null);
 
@@ -52,8 +52,8 @@ export default function ProductsPage() {
                 {t("product.noImage")}
               </div>
             )}
-            <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-            <p className="text-gray-600 text-sm mb-4 flex-1">{product.description}</p>
+            <h3 className="text-lg font-semibold mb-2">{getProductName(product)}</h3>
+            <p className="text-gray-600 text-sm mb-4 flex-1">{getProductDesc(product)}</p>
             <div className="flex items-center justify-between mt-auto flex-wrap gap-2">
               <span className="font-bold text-lg">{formatPrice(product.price)}</span>
               <button

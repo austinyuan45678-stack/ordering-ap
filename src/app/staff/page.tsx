@@ -8,7 +8,7 @@ import { useApp } from "@/app/Providers";
 export default function StaffPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { t, formatPrice } = useApp();
+  const { t, formatPrice, getProductName } = useApp();
 
   const [orders, setOrders] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const prevOrderCountRef = useRef(0);
@@ -115,7 +115,7 @@ export default function StaffPage() {
                   <ul className="list-disc pl-4">
                     {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                       <li key={item.id} className="text-sm text-gray-900 whitespace-normal">
-                        {item.product.name} (x{item.quantity})
+                        {getProductName(item.product)} (x{item.quantity})
                       </li>
                     ))}
                   </ul>

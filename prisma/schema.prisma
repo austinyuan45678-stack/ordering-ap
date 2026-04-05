@@ -20,15 +20,17 @@ model User {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  imageUrl    String?
-  isAvailable Boolean     @default(true)
-  orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String      @id @default(cuid())
+  name          String
+  nameVi        String?
+  description   String?
+  descriptionVi String?
+  price         Float
+  imageUrl      String?
+  isAvailable   Boolean     @default(true)
+  orderItems    OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Order {

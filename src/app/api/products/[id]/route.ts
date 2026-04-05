@@ -18,12 +18,15 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { price, isAvailable, name, imageUrl } = body;
+    const { price, isAvailable, name, nameVi, description, descriptionVi, imageUrl } = body;
 
     const updateData: Record<string, number | boolean | string | null> = {};
     if (price !== undefined) updateData.price = parseFloat(price);
     if (isAvailable !== undefined) updateData.isAvailable = Boolean(isAvailable);
     if (name !== undefined) updateData.name = String(name);
+    if (nameVi !== undefined) updateData.nameVi = nameVi;
+    if (description !== undefined) updateData.description = description;
+    if (descriptionVi !== undefined) updateData.descriptionVi = descriptionVi;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
 
     const product = await prisma.product.update({

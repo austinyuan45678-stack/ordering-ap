@@ -12,7 +12,7 @@ export default function AccountPage() {
   const [newPassword, setNewPassword] = useState("");
   const [passLoading, setPassLoading] = useState(false);
   const router = useRouter();
-  const { t, formatPrice } = useApp();
+  const { t, formatPrice, getProductName } = useApp();
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -119,7 +119,7 @@ export default function AccountPage() {
                   <div className="space-y-2 mb-3">
                     {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                       <div key={item.id} className="flex justify-between text-sm">
-                        <span className="font-bold">{item.product.name} (x{item.quantity})</span>
+                        <span className="font-bold">{getProductName(item.product)} (x{item.quantity})</span>
                         <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
                       </div>
                     ))}
