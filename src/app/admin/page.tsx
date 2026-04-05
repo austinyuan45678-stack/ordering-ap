@@ -41,6 +41,8 @@ export default function AdminPage() {
 
   const prevOrderCountRef = useRef(0);
 
+  const [newOrderNotification, setNewOrderNotification] = useState<{show: boolean, name: string}>({show: false, name: ""});
+
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "ADMIN") {
@@ -87,9 +89,15 @@ export default function AdminPage() {
         if (data.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
           // Play voice notification
           if ('speechSynthesis' in window) {
-            const msg = new SpeechSynthesisUtterance("您有新的订单，请注意查收");
+            const userName = data[0]?.user?.name || "未知用户";
+            const msg = new SpeechSynthesisUtterance(`用户 ${userName} 已经下单，请及时处理`);
             msg.lang = 'zh-CN';
             window.speechSynthesis.speak(msg);
+            
+            // Show toast notification
+            setNewOrderNotification({ show: true, name: userName });
+            // Auto hide after 15 seconds
+            setTimeout(() => setNewOrderNotification({ show: false, name: "" }), 15000);
           }
           if (activeTab === "orders") {
             setOrders(data);
@@ -356,6 +364,29 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
+      {newOrderNotification.show && (
+        <div className="fixed top-4 right-4 z-50 bg-white border-l-4 border-blue-500 rounded shadow-lg p-4 max-w-sm animate-bounce-in">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h3 className="text-blue-600 font-bold">{t("admin.newOrderAlert")}</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {t("admin.newOrderDesc").replace("{name}", newOrderNotification.name)}
+              </p>
+            </div>
+            <button onClick={() => setNewOrderNotification({ show: false, name: "" })} className="text-gray-400 hover:text-gray-600 ml-2">✕</button>
+          </div>
+          <button 
+            onClick={() => {
+              setActiveTab("orders");
+              setNewOrderNotification({ show: false, name: "" });
+            }} 
+            className="mt-3 text-sm bg-blue-50 text-blue-600 font-medium px-3 py-1.5 rounded hover:bg-blue-100"
+          >
+            {t("admin.viewOrder")}
+          </button>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <h1 className="text-3xl font-bold">{t("admin.dashboard")}</h1>
         <div className="flex space-x-2 sm:space-x-4">
