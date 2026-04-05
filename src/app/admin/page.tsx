@@ -573,11 +573,55 @@ export default function AdminPage() {
                     <div>
                       <div className="flex flex-col justify-between items-start w-full mb-2">
                         {editingProductId === product.id ? (
-                          <div className="flex flex-col space-y-2 w-full">
-                            <input type="text" value={editNameValue} onChange={(e) => setEditNameValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.name")} />
-                            <input type="text" value={editNameViValue} onChange={(e) => setEditNameViValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.nameVi")} />
-                            <textarea value={editDescValue} onChange={(e) => setEditDescValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.desc")} rows={2} />
-                            <textarea value={editDescViValue} onChange={(e) => setEditDescViValue(e.target.value)} className="px-2 py-1 border rounded text-sm w-full" placeholder={t("product.descVi")} rows={2} />
+                          <div className="flex flex-col space-y-3 w-full bg-blue-50/50 p-4 rounded-lg border border-blue-200 mt-2 shadow-sm relative z-10">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">{t("product.name")}</label>
+                                <input type="text" value={editNameValue} onChange={(e) => setEditNameValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full" placeholder={t("product.name")} />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">{t("product.nameVi")}</label>
+                                <input type="text" value={editNameViValue} onChange={(e) => setEditNameViValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full" placeholder={t("product.nameVi")} />
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">{t("product.desc")}</label>
+                                <textarea value={editDescValue} onChange={(e) => setEditDescValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full" placeholder={t("product.desc")} rows={2} />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">{t("product.descVi")}</label>
+                                <textarea value={editDescViValue} onChange={(e) => setEditDescViValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full" placeholder={t("product.descVi")} rows={2} />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">{t("product.price")} ({currency})</label>
+                                <input type="number" step="0.01" value={editPriceValue} onChange={(e) => setEditPriceValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full" />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">{t("product.stock")}</label>
+                                <input type="number" value={editStockValue} onChange={(e) => setEditStockValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full" />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">{t("product.unit")}</label>
+                                <select value={editUnitValue} onChange={(e) => setEditUnitValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full bg-white">
+                                  <option value="个/Cái">个/Cái</option>
+                                  <option value="袋/Túi">袋/Túi</option>
+                                  <option value="盒/Hộp">盒/Hộp</option>
+                                  <option value="瓶/Chai">瓶/Chai</option>
+                                  <option value="罐/Lon">罐/Lon</option>
+                                  <option value="包/Gói">包/Gói</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="flex space-x-3 pt-2 justify-end">
+                              <button onClick={() => { setEditingProductId(null); setEditFile(null); }} className="text-gray-700 bg-white border border-gray-300 px-4 py-1.5 rounded hover:bg-gray-50 text-sm font-medium">{t("admin.cancel")}</button>
+                              <button onClick={() => updateProductPriceAndName(product.id)} disabled={loading} className="text-white bg-blue-600 px-4 py-1.5 rounded hover:bg-blue-700 text-sm font-medium disabled:opacity-50">{loading ? t("general.loading") : t("admin.save")}</button>
+                            </div>
                           </div>
                         ) : (
                           <div className="flex flex-col w-full">
@@ -597,33 +641,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between border-t pt-3">
-                      {editingProductId === product.id ? (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">{t("product.price")}:</span>
-                            <input type="number" step="0.01" value={editPriceValue} onChange={(e) => setEditPriceValue(e.target.value)} className="w-20 px-2 py-1 border rounded text-sm" />
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">{t("product.stock")}:</span>
-                            <input type="number" value={editStockValue} onChange={(e) => setEditStockValue(e.target.value)} className="w-16 px-2 py-1 border rounded text-sm" />
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">{t("product.unit")}:</span>
-                            <select value={editUnitValue} onChange={(e) => setEditUnitValue(e.target.value)} className="w-24 px-1 py-1 border rounded text-sm">
-                              <option value="个/Cái">个/Cái</option>
-                              <option value="袋/Túi">袋/Túi</option>
-                              <option value="盒/Hộp">盒/Hộp</option>
-                              <option value="瓶/Chai">瓶/Chai</option>
-                              <option value="罐/Lon">罐/Lon</option>
-                              <option value="包/Gói">包/Gói</option>
-                            </select>
-                          </div>
-                          <div className="flex space-x-2 mt-2 sm:mt-0 w-full sm:w-auto justify-end sm:ml-auto">
-                            <button onClick={() => updateProductPriceAndName(product.id)} disabled={loading} className="text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700 text-sm font-medium disabled:opacity-50">{t("admin.save")}</button>
-                            <button onClick={() => { setEditingProductId(null); setEditFile(null); }} className="text-gray-600 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm">{t("admin.cancel")}</button>
-                          </div>
-                        </div>
-                      ) : (
+                      {editingProductId === product.id ? null : (
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-2 sm:mb-0">
                             <p className="font-semibold text-blue-600 text-lg">{formatPrice(product.price)}</p>
