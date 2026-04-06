@@ -51,6 +51,10 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    if (session.user.role === "USER" && order.status !== "PENDING") {
+      return new NextResponse("此订单已被管理员处理，无法再修改或取消 / Đơn hàng đã được xử lý, không thể sửa đổi", { status: 403 });
+    }
+
     // Only Admin or User (if order is PENDING) can edit address/phone/items
     const canEditDetails = session.user.role === "ADMIN" || (session.user.id === order.userId && order.status === "PENDING");
 

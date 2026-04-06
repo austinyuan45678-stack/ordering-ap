@@ -303,7 +303,12 @@ export default function AccountPage() {
         const updatedOrder = await res.json();
         setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       } else {
-        alert("Failed to cancel order");
+        const text = await res.text();
+        alert(text || "Failed to cancel order");
+        // Revert optimistic or stale UI
+        fetch("/api/orders", { cache: "no-store" })
+          .then((res) => res.json())
+          .then((data) => setOrders(data));
       }
     } catch (err) {
       console.error(err);
@@ -334,7 +339,12 @@ export default function AccountPage() {
         const updatedOrder = await res.json();
         setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       } else {
-        alert("Failed to update");
+        const text = await res.text();
+        alert(text || "Failed to update order");
+        // Revert optimistic or stale UI
+        fetch("/api/orders", { cache: "no-store" })
+          .then((res) => res.json())
+          .then((data) => setOrders(data));
       }
     } catch (err) {
       console.error(err);
