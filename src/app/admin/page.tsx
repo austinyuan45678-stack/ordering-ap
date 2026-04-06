@@ -46,6 +46,7 @@ export default function AdminPage() {
   const [newOrderNotification, setNewOrderNotification] = useState<{show: boolean, name: string}>({show: false, name: ""});
 
   const [supportPhone, setSupportPhone] = useState("");
+  const [supportQrcodeFile, setSupportQrcodeFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -74,20 +75,40 @@ export default function AdminPage() {
     if (session?.user.role === "ADMIN") {
       fetchData();
       fetch("/api/settings").then(res => res.json()).then(data => {
-        if (data.phone) setSupportPhone(data.phone);
+        if (data.support_phone) setSupportPhone(data.support_phone);
       });
     }
   }, [activeTab, session]);
 
   const handleSaveSupportPhone = async () => {
     try {
+      let qrcodeUrl = "";
+      if (supportQrcodeFile) {
+        const formData = new FormData();
+        formData.append("file", supportQrcodeFile);
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          qrcodeUrl = uploadData.url;
+        }
+      }
+
+      const body: Record<string, string> = { support_phone: supportPhone };
+      if (qrcodeUrl) {
+        body.support_qrcode = qrcodeUrl;
+      }
+
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: supportPhone }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         alert(t("admin.addSuccess"));
+        setSupportQrcodeFile(null);
       } else {
         alert("Failed to save");
       }
@@ -673,15 +694,30 @@ export default function AdminPage() {
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h2 className="text-xl font-bold mb-6">{t("admin.contactInfo")}</h2>
-            <div className="flex gap-4 max-w-sm">
-              <input 
-                type="tel" 
-                value={supportPhone} 
-                onChange={e => setSupportPhone(e.target.value)} 
-                placeholder="Ex: 18529510460"
-                className="flex-1 px-3 py-2 border rounded-md"
-              />
-              <button onClick={handleSaveSupportPhone} className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+            <div className="flex gap-4 max-w-lg items-end">
+              <div className="flex-1 space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">联系电话 / WhatsApp</label>
+                  <input 
+                    type="tel" 
+                    value={supportPhone} 
+                    onChange={e => setSupportPhone(e.target.value)} 
+                    placeholder="Ex: 18529510460"
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">客服微信二维码 (QR Code)</label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={e => setSupportQrcodeFile(e.target.files?.[0] || null)} 
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  />
+                  {supportQrcodeFile && <p className="text-xs text-green-600 mt-1">已选择新二维码，点击保存上传</p>}
+                </div>
+              </div>
+              <button onClick={handleSaveSupportPhone} className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 h-10 mb-[2px]">
                 {t("admin.save")}
               </button>
             </div>

@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { CartProvider } from "@/components/CartContext";
 import { MessageCircle, PhoneCall, X } from "lucide-react";
+import Image from "next/image";
 
 type Language = "en" | "zh" | "vi";
 type Currency = "CNY" | "VND";
@@ -67,9 +68,9 @@ const translations: Record<Language, Record<string, string>> = {
     "account.notSet": "未设置",
     "account.cancelOrder": "取消订单",
     "account.contactUs": "联系客服 (微信/电话)",
-    "account.chat": "复制微信号并打开",
+    "account.chat": "扫码联系微信",
     "account.call": "拨打电话",
-    "admin.contactInfo": "客服电话设定",
+    "admin.contactInfo": "客服联系方式设定",
     "admin.dashboard": "管理后台仪表盘",
     "admin.products": "商品管理",
     "admin.orders": "订单管理",
@@ -181,7 +182,7 @@ const translations: Record<Language, Record<string, string>> = {
     "account.notSet": "N/A",
     "account.cancelOrder": "Cancel Order",
     "account.contactUs": "Contact Us (WeChat/Call)",
-    "account.chat": "Copy WeChat ID",
+    "account.chat": "Scan WeChat QR",
     "account.call": "Call Us",
     "admin.contactInfo": "Support Contact",
     "admin.dashboard": "Admin Dashboard",
@@ -282,9 +283,9 @@ const translations: Record<Language, Record<string, string>> = {
     "account.notSet": "Chưa thiết lập",
     "account.cancelOrder": "Hủy đơn hàng",
     "account.contactUs": "Liên hệ (WeChat/Gọi)",
-    "account.chat": "Sao chép WeChat ID",
+    "account.chat": "Quét mã WeChat",
     "account.call": "Gọi điện",
-    "admin.contactInfo": "Cài đặt SĐT",
+    "admin.contactInfo": "Cài đặt Liên hệ CSKH",
     "account.password": "Đổi mật khẩu",
     "account.oldPassword": "Mật khẩu cũ",
     "account.newPassword": "Mật khẩu mới",
@@ -484,7 +485,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   
   const [supportPhone, setSupportPhone] = useState("");
+  const [supportQrcode, setSupportQrcode] = useState("");
   const [showContactMenu, setShowContactMenu] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
   
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -506,7 +509,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }
 
     fetch("/api/settings").then(res => res.json()).then(data => {
-      if (data.phone) setSupportPhone(data.phone);
+      if (data.support_phone) setSupportPhone(data.support_phone);
+      if (data.support_qrcode) setSupportQrcode(data.support_qrcode);
     });
   }, []);
 
@@ -561,30 +565,32 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <GlobalFeatures />
         <CartProvider>
           {children}
-          {supportPhone && (
-            <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
+          {(supportPhone || supportQrcode) && (
+            <div className="fixed bottom-6 right-6 z-[9998] flex flex-col items-end">
               {showContactMenu && (
                 <div className="bg-white rounded-lg shadow-xl border p-2 mb-4 flex flex-col gap-2 min-w-[160px] animate-bounce-in">
-                  <button
-                    className="flex items-center gap-3 px-4 py-3 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors font-medium text-sm text-left"
-                    onClick={() => {
-                      navigator.clipboard.writeText(supportPhone);
-                      alert(lang === "zh" ? "微信号/电话已复制，正在尝试打开微信..." : lang === "en" ? "WeChat ID copied. Attempting to open WeChat..." : "Đã sao chép WeChat ID. Đang thử mở WeChat...");
-                      setShowContactMenu(false);
-                      window.location.href = "weixin://";
-                    }}
-                  >
-                    <MessageCircle className="h-5 w-5 flex-shrink-0" />
-                    {t("account.chat")}
-                  </button>
-                  <a
-                    href={`tel:${supportPhone}`}
-                    className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors font-medium text-sm text-left"
-                    onClick={() => setShowContactMenu(false)}
-                  >
-                    <PhoneCall className="h-5 w-5 flex-shrink-0" />
-                    {t("account.call")}
-                  </a>
+                  {supportQrcode && (
+                    <button
+                      className="flex items-center gap-3 px-4 py-3 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors font-medium text-sm text-left"
+                      onClick={() => {
+                        setShowContactMenu(false);
+                        setShowQrModal(true);
+                      }}
+                    >
+                      <MessageCircle className="h-5 w-5 flex-shrink-0" />
+                      {t("account.chat")}
+                    </button>
+                  )}
+                  {supportPhone && (
+                    <a
+                      href={`tel:${supportPhone}`}
+                      className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors font-medium text-sm text-left"
+                      onClick={() => setShowContactMenu(false)}
+                    >
+                      <PhoneCall className="h-5 w-5 flex-shrink-0" />
+                      {t("account.call")}
+                    </a>
+                  )}
                 </div>
               )}
               <button
@@ -599,6 +605,37 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   </span>
                 )}
               </button>
+            </div>
+          )}
+
+          {showQrModal && supportQrcode && (
+            <div 
+              className="fixed inset-0 z-[9999] bg-black/80 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
+              onClick={() => setShowQrModal(false)}
+            >
+              <button 
+                className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white bg-white/20 hover:bg-white/40 rounded-full p-2"
+                onClick={(e) => { e.stopPropagation(); setShowQrModal(false); }}
+              >
+                <X className="h-6 w-6" />
+              </button>
+              <div className="bg-white p-6 rounded-xl flex flex-col items-center max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+                <h3 className="text-xl font-bold mb-6 text-gray-800 text-center">{t("account.chat")}</h3>
+                <div className="relative w-64 h-64 mb-6 border-4 border-green-500 rounded-lg overflow-hidden">
+                  <Image src={supportQrcode} alt="WeChat QR Code" fill className="object-contain" />
+                </div>
+                <p className="text-sm text-gray-500 text-center">
+                  {lang === "zh" ? "请长按保存图片或直接使用微信扫一扫" : 
+                   lang === "vi" ? "Vui lòng lưu hình ảnh hoặc sử dụng WeChat để quét" : 
+                   "Save image or use WeChat to scan"}
+                </p>
+                <button 
+                  onClick={() => setShowQrModal(false)}
+                  className="mt-6 w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  {t("admin.cancel") || "Close"}
+                </button>
+              </div>
             </div>
           )}
         </CartProvider>
