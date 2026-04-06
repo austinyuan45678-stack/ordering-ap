@@ -68,7 +68,10 @@ export default function AccountPage() {
       .then(setAllProducts);
   }, []);
 
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const handleUpdateOrder = async (orderId: string) => {
+    setIsUpdating(true);
     try {
       const totalAmount = editItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
       const res = await fetch(`/api/orders/${orderId}`, {
@@ -90,11 +93,14 @@ export default function AccountPage() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleCancelOrder = async (orderId: string) => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
+    setIsUpdating(true);
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
@@ -102,12 +108,15 @@ export default function AccountPage() {
         body: JSON.stringify({ status: "CANCELLED" }),
       });
       if (res.ok) {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: "CANCELLED" } : o));
+        const updatedOrder = await res.json();
+        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       } else {
         alert("Failed to cancel order");
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -279,7 +288,9 @@ export default function AccountPage() {
                           placeholder={t("order.address")}
                         />
                         <div className="flex gap-2">
-                          <button onClick={() => handleUpdateOrder(order.id)} disabled={editItems.length === 0} className="bg-blue-600 text-white text-xs px-3 py-1 rounded disabled:opacity-50">保存 / Save</button>
+                          <button onClick={() => handleUpdateOrder(order.id)} disabled={editItems.length === 0 || isUpdating} className="bg-blue-600 text-white text-xs px-3 py-1 rounded disabled:opacity-50">
+                            {isUpdating ? "保存中..." : "保存 / Save"}
+                          </button>
                           <button onClick={() => setEditingOrderId(null)} className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded">取消 / Cancel</button>
                         </div>
                       </div>
@@ -316,9 +327,10 @@ export default function AccountPage() {
                       </button>
                       <button 
                         onClick={() => handleCancelOrder(order.id)}
-                        className="mt-3 text-xs text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md font-medium transition whitespace-nowrap"
+                        disabled={isUpdating}
+                        className="mt-3 text-xs text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md font-medium transition whitespace-nowrap disabled:opacity-50"
                       >
-                        {t("account.cancelOrder")}
+                        {isUpdating ? "..." : t("account.cancelOrder")}
                       </button>
                     </div>
                   )}

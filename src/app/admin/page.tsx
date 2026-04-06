@@ -71,7 +71,10 @@ export default function AdminPage() {
     }
   };
 
+  const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
+
   const adminUpdateOrderDetails = async (orderId: string) => {
+    setIsUpdatingOrder(true);
     try {
       const totalAmount = editOrderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
       const res = await fetch(`/api/orders/${orderId}`, {
@@ -94,6 +97,8 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsUpdatingOrder(false);
     }
   };
 
@@ -1064,8 +1069,8 @@ export default function AdminPage() {
                       <div className="flex gap-2 mt-2 w-full">
                         {editingOrderId === order.id ? (
                           <>
-                            <button onClick={() => adminUpdateOrderDetails(order.id)} className="text-xs text-white bg-green-500 hover:bg-green-600 px-2 py-1 rounded flex-1">
-                              {t("admin.save")}
+                            <button onClick={() => adminUpdateOrderDetails(order.id)} disabled={isUpdatingOrder} className="text-xs text-white bg-green-500 hover:bg-green-600 px-2 py-1 rounded flex-1 disabled:opacity-50">
+                              {isUpdatingOrder ? t("general.loading") : t("admin.save")}
                             </button>
                             <button onClick={() => setEditingOrderId(null)} className="text-xs text-gray-600 bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded flex-1">
                               {t("admin.cancel")}
