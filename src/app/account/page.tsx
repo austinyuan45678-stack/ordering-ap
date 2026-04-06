@@ -12,6 +12,7 @@ function OrderCard({ order, t, formatPrice, getProductName, onCancel, onUpdate, 
   const [editAddress, setEditAddress] = useState(order.address);
   const [editPhone, setEditPhone] = useState(order.phone);
   const [editItems, setEditItems] = useState(order.items.map((i: any) => ({ ...i }))); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [showAddMenu, setShowAddMenu] = useState(false);
 
   const handleSave = async () => {
     setIsUpdating(true);
