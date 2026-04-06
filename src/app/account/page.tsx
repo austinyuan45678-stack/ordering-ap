@@ -234,11 +234,6 @@ export default function AccountPage() {
   }, [status, router]);
 
   const [allProducts, setAllProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
-  const [editAddress, setEditAddress] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [editItems, setEditItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -318,7 +313,6 @@ export default function AccountPage() {
       if (res.ok) {
         const updatedOrder = await res.json();
         setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
-        setEditingOrderId(null);
       } else {
         alert("Failed to update");
       }
