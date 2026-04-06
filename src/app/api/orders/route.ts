@@ -18,9 +18,13 @@ export async function POST(req: Request) {
       return new NextResponse("Missing fields", { status: 400 });
     }
 
+    const productIds = items.map((i: any) => i.productId); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+    const productMap = new Map(products.map(p => [p.id, p]));
+
     // Verify all products exist and have enough stock
     for (const item of items) {
-      const product = await prisma.product.findUnique({ where: { id: item.productId } });
+      const product = productMap.get(item.productId);
       if (!product) {
         return new NextResponse(`Product no longer exists: ${item.name || item.productId}`, { status: 400 });
       }

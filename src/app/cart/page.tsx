@@ -49,7 +49,6 @@ export default function CartPage() {
         throw new Error(text || "Failed to order");
       }
 
-      alert(t("order.success"));
       clearCart();
       router.push("/account");
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any

@@ -81,9 +81,8 @@ export async function PATCH(
       if (totalAmount !== undefined) updateData.totalAmount = totalAmount;
 
       if (items && Array.isArray(items)) {
-        // Delete old items and recreate new ones for simplicity
-        await prisma.orderItem.deleteMany({ where: { orderId: id } });
         updateData.items = {
+          deleteMany: {},
           create: items.map((item: { productId: string, quantity: number, price: number }) => ({
             productId: item.productId,
             quantity: item.quantity,

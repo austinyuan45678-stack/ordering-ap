@@ -308,7 +308,7 @@ export default function AccountPage() {
                           setEditingOrderId(order.id);
                           setEditPhone(order.phone);
                           setEditAddress(order.address);
-                          setEditItems(order.items.map((i: any) => ({ ...i })));
+                          setEditItems(order.items.map((i: any) => ({ ...i }))); // eslint-disable-line @typescript-eslint/no-explicit-any
                         }}
                         className="mt-3 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md font-medium transition whitespace-nowrap"
                       >

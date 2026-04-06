@@ -85,8 +85,9 @@ export default function AdminPage() {
         })
       });
       if (res.ok) {
+        const updatedOrder = await res.json();
+        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
         setEditingOrderId(null);
-        fetchData();
         alert(t("admin.addSuccess") || "Updated successfully");
       } else {
         alert("Failed to update order");
@@ -1065,7 +1066,7 @@ export default function AdminPage() {
                             setEditingOrderId(order.id);
                             setEditOrderAddress(order.address);
                             setEditOrderPhone(order.phone);
-                            setEditOrderItems(order.items.map((i: any) => ({ ...i })));
+                            setEditOrderItems(order.items.map((i: any) => ({ ...i }))); // eslint-disable-line @typescript-eslint/no-explicit-any
                           }} className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded flex-1">
                             {t("admin.edit")}
                           </button>
