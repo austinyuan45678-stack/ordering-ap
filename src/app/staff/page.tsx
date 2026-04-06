@@ -31,6 +31,12 @@ export default function StaffPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchData();
     }
+
+    const handleNewOrder = () => {
+      fetchData();
+    };
+    window.addEventListener("new_order_received", handleNewOrder);
+    return () => window.removeEventListener("new_order_received", handleNewOrder);
   }, [session]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {

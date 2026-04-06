@@ -442,6 +442,9 @@ function GlobalFeatures() {
           
           setNewOrderNotification({ show: true, name: userName });
           setTimeout(() => setNewOrderNotification({ show: false, name: "" }), 15000);
+          
+          // Dispatch a custom event so other components (Admin/Staff pages) can refresh their lists
+          window.dispatchEvent(new CustomEvent("new_order_received"));
         }
         if (data && Array.isArray(data)) {
           prevOrderCountRef.current = data.length;

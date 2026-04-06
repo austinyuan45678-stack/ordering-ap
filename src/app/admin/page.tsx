@@ -129,6 +129,14 @@ export default function AdminPage() {
         if (data.support_phone) setSupportPhone(data.support_phone);
       });
     }
+
+    const handleNewOrder = () => {
+      if (activeTab === "orders" || activeTab === "stats") {
+        fetchData();
+      }
+    };
+    window.addEventListener("new_order_received", handleNewOrder);
+    return () => window.removeEventListener("new_order_received", handleNewOrder);
   }, [activeTab, session]);
 
   const handleSaveSupportPhone = async () => {
