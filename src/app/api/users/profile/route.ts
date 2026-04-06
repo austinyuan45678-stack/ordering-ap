@@ -15,10 +15,12 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, phone: true, address: true, email: true },
+      select: { name: true, defaultPhone: true, address: true, email: true },
     });
 
-    return NextResponse.json(user || {});
+    // Map `defaultPhone` back to `phone` for the frontend to consume
+    const result = user ? { ...user, phone: user.defaultPhone } : {};
+    return NextResponse.json(result);
   } catch (error) {
     console.error("PROFILE_GET_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });
@@ -38,7 +40,7 @@ export async function PATCH(req: Request) {
 
     const updateData: Record<string, string | null> = {};
     if (name !== undefined) updateData.name = name || null;
-    if (phone !== undefined) updateData.phone = phone || null;
+    if (phone !== undefined) updateData.defaultPhone = phone || null;
     if (address !== undefined) updateData.address = address || null;
 
     const updatedUser = await prisma.user.update({

@@ -9,11 +9,12 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  email     String?  @unique
-  phone     String?  @unique
-  password  String
-  name      String?
-  address   String?
+  email        String?  @unique
+  phone        String?  @unique
+  password     String
+  name         String?
+  address      String?
+  defaultPhone String?
   role      String   @default("USER") // ADMIN, STAFF, or USER
   orders    Order[]
   createdAt DateTime @default(now())
