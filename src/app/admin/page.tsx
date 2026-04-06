@@ -966,11 +966,21 @@ export default function AdminPage() {
                     {editingOrderId === order.id ? (
                       <div className="space-y-2 w-64">
                         {editOrderItems.map((eItem: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                          <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-yellow-50 p-1 rounded border border-yellow-100">
-                            <span className="truncate w-32 font-bold" title={eItem.product ? getProductName(eItem.product) : "商品"}>
-                              {eItem.product ? getProductName(eItem.product) : "商品"}
-                            </span>
-                            <div className="flex items-center gap-1">
+                          <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-yellow-50 p-2 rounded border border-yellow-100">
+                            <div className="flex items-center gap-2 flex-1">
+                              {eItem.product?.imageUrl ? (
+                                <Image src={eItem.product.imageUrl} alt="img" width={32} height={32} className="object-cover rounded border flex-shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
+                              )}
+                              <div className="flex flex-col min-w-0">
+                                <span className="truncate w-24 sm:w-32 font-bold leading-tight" title={eItem.product ? getProductName(eItem.product) : "商品"}>
+                                  {eItem.product ? getProductName(eItem.product) : "商品"}
+                                </span>
+                                <span className="text-xs text-gray-500">{formatPrice(eItem.price)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               <button onClick={() => {
                                 const newItems = [...editOrderItems];
                                 if (newItems[idx].quantity > 1) {
@@ -980,13 +990,13 @@ export default function AdminPage() {
                                   newItems.splice(idx, 1);
                                   setEditOrderItems(newItems);
                                 }
-                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">-</button>
-                              <span className="w-6 text-center text-xs">{eItem.quantity}</span>
+                              }} className="bg-gray-200 px-2 py-0.5 rounded hover:bg-gray-300">-</button>
+                              <span className="w-6 text-center text-xs font-bold">{eItem.quantity}</span>
                               <button onClick={() => {
                                 const newItems = [...editOrderItems];
                                 newItems[idx].quantity += 1;
                                 setEditOrderItems(newItems);
-                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">+</button>
+                              }} className="bg-gray-200 px-2 py-0.5 rounded hover:bg-gray-300">+</button>
                             </div>
                           </div>
                         ))}
