@@ -178,7 +178,17 @@ export default function AccountPage() {
                       <div className="space-y-2 mb-3">
                         {editItems.map((eItem: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                           <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-yellow-50 p-2 rounded border border-yellow-100">
-                            <span className="truncate w-32 font-bold">{getProductName(eItem.product)}</span>
+                            <div className="flex items-center gap-2">
+                              {eItem.product.imageUrl ? (
+                                <Image src={eItem.product.imageUrl} alt="img" width={32} height={32} className="object-cover rounded border" />
+                              ) : (
+                                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500">No Img</div>
+                              )}
+                              <div className="flex flex-col">
+                                <span className="truncate w-32 font-bold">{getProductName(eItem.product)}</span>
+                                <span className="text-xs text-gray-500">{formatPrice(eItem.price)}</span>
+                              </div>
+                            </div>
                             <div className="flex items-center gap-2">
                               <button onClick={() => {
                                 const newItems = [...editItems];
@@ -298,6 +308,7 @@ export default function AccountPage() {
                           setEditingOrderId(order.id);
                           setEditPhone(order.phone);
                           setEditAddress(order.address);
+                          setEditItems(order.items.map((i: any) => ({ ...i })));
                         }}
                         className="mt-3 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md font-medium transition whitespace-nowrap"
                       >

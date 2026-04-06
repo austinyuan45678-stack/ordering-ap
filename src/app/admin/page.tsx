@@ -1065,7 +1065,7 @@ export default function AdminPage() {
                             setEditingOrderId(order.id);
                             setEditOrderAddress(order.address);
                             setEditOrderPhone(order.phone);
-                            setEditOrderItems(order.items);
+                            setEditOrderItems(order.items.map((i: any) => ({ ...i })));
                           }} className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded flex-1">
                             {t("admin.edit")}
                           </button>
