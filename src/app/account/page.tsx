@@ -16,7 +16,20 @@ function OrderCard({ order, t, formatPrice, getProductName, onCancel, onUpdate, 
 
   const handleSave = async () => {
     setIsUpdating(true);
-    await onUpdate(order.id, editAddress, editPhone, editItems);
+    
+    // Optimistic UI update
+    const totalAmount = editItems.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const tempUpdatedOrder = {
+      ...order,
+      address: editAddress,
+      phone: editPhone,
+      items: editItems,
+      totalAmount
+    };
+    
+    // Call parent handler without blocking the local UI flip
+    onUpdate(order.id, editAddress, editPhone, editItems, tempUpdatedOrder);
+    
     setIsEditing(false);
     setIsUpdating(false);
   };
@@ -296,7 +309,11 @@ export default function AccountPage() {
     }
   };
 
-  const handleUpdateOrder = async (orderId: string, address: string, phone: string, items: any[]) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const handleUpdateOrder = async (orderId: string, address: string, phone: string, items: any[], optimisticOrder?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (optimisticOrder) {
+      setOrders(orders.map(o => o.id === orderId ? optimisticOrder : o));
+    }
+    
     setIsUpdating(true);
     try {
       const totalAmount = items.reduce((acc, item) => acc + item.price * item.quantity, 0);

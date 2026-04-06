@@ -76,8 +76,20 @@ export default function AdminPage() {
 
   const adminUpdateOrderDetails = async (orderId: string) => {
     setIsUpdatingOrder(true);
+    
+    // Optimistic Update
+    const totalAmount = editOrderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const tempUpdatedOrder = {
+      ...orders.find(o => o.id === orderId),
+      address: editOrderAddress,
+      phone: editOrderPhone,
+      items: editOrderItems,
+      totalAmount
+    };
+    setOrders(orders.map(o => o.id === orderId ? tempUpdatedOrder : o));
+    setEditingOrderId(null);
+
     try {
-      const totalAmount = editOrderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -91,13 +103,13 @@ export default function AdminPage() {
       if (res.ok) {
         const updatedOrder = await res.json();
         setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
-        setEditingOrderId(null);
-        alert(t("admin.addSuccess") || "Updated successfully");
       } else {
         alert("Failed to update order");
+        fetchData(); // revert
       }
     } catch (err) {
       console.error(err);
+      fetchData(); // revert
     } finally {
       setIsUpdatingOrder(false);
     }
