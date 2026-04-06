@@ -46,6 +46,22 @@ export default function AdminPage() {
   const [editOrderPhone, setEditOrderPhone] = useState("");
   const [editOrderItems, setEditOrderItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 
+  const fetchData = async () => {
+    if (activeTab === "products" || activeTab === "bulkAdd") {
+      const res = await fetch("/api/products", { cache: "no-store" });
+      const data = await res.json();
+      setProducts(data);
+    } else if (activeTab === "orders" || activeTab === "stats") {
+      const res = await fetch("/api/orders", { cache: "no-store" });
+      const data = await res.json();
+      setOrders(data);
+    } else if (activeTab === "users") {
+      const res = await fetch("/api/users", { cache: "no-store" });
+      const data = await res.json();
+      setUsers(data);
+    }
+  };
+
   const adminUpdateOrderDetails = async (orderId: string) => {
     try {
       const totalAmount = editOrderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
