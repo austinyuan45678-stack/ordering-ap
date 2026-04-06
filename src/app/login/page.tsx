@@ -23,7 +23,10 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError(res.error);
+        if (res.error === "ERROR_MISSING_FIELDS") setError(t("auth.err.missing"));
+        else if (res.error === "ERROR_USER_NOT_FOUND") setError(t("auth.err.notFound"));
+        else if (res.error === "ERROR_INVALID_PASSWORD") setError(t("auth.err.invalid"));
+        else setError(res.error);
       } else {
         router.push("/");
         router.refresh();

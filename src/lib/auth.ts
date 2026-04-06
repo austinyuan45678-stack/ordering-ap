@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.account || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          throw new Error("ERROR_MISSING_FIELDS");
         }
         
         const user = await prisma.user.findFirst({
@@ -26,7 +26,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          throw new Error("User not found");
+          throw new Error("ERROR_USER_NOT_FOUND");
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error("Invalid password");
+          throw new Error("ERROR_INVALID_PASSWORD");
         }
 
         return {
