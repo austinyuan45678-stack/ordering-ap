@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/app/Providers";
+import Image from "next/image";
 
 export default function StaffPage() {
   const { data: session, status } = useSession();
@@ -91,14 +92,24 @@ export default function StaffPage() {
                   <div className="text-sm text-gray-900 max-w-xs break-words">{order.address}</div>
                 </td>
                 <td className="px-6 py-4">
-                  <ul className="list-disc pl-4">
+                  <div className="space-y-2 min-w-[200px]">
                     {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                      <li key={item.id} className="text-sm text-gray-900 whitespace-normal">
-                        {getProductName(item.product)} (x{item.quantity})
-                      </li>
+                      <div key={item.id} className="flex items-center gap-2">
+                        {item.product.imageUrl ? (
+                          <Image src={item.product.imageUrl} alt="product" width={40} height={40} className="object-cover rounded flex-shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-900 font-medium leading-tight">
+                            {getProductName(item.product)} <span className="font-bold text-blue-600">(x{item.quantity})</span>
+                          </span>
+                          <span className="text-[10px] text-gray-400">ID: {item.productId.slice(-6).toUpperCase()}</span>
+                        </div>
+                      </div>
                     ))}
-                  </ul>
-                  <div className="text-sm font-bold mt-1 text-blue-600">{t("cart.total")}: {formatPrice(order.totalAmount)}</div>
+                    <div className="text-sm font-bold mt-2 pt-2 border-t text-blue-600">{t("cart.total")}: {formatPrice(order.totalAmount)}</div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {order.status.startsWith('CANCELLED') ? (

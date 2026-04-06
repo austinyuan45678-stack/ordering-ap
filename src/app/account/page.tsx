@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useApp } from "@/app/Providers";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
@@ -58,16 +59,31 @@ export default function AccountPage() {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editAddress, setEditAddress] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editItems, setEditItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [allProducts, setAllProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  useEffect(() => {
+    fetch("/api/products", { cache: "no-store" })
+      .then(res => res.json())
+      .then(setAllProducts);
+  }, []);
 
   const handleUpdateOrder = async (orderId: string) => {
     try {
+      const totalAmount = editItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: editAddress, phone: editPhone }),
+        body: JSON.stringify({ 
+          address: editAddress, 
+          phone: editPhone,
+          items: editItems,
+          totalAmount 
+        }),
       });
       if (res.ok) {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, address: editAddress, phone: editPhone } : o));
+        const updatedOrder = await res.json();
+        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
         setEditingOrderId(null);
       } else {
         alert("Failed to update");
@@ -158,16 +174,82 @@ export default function AccountPage() {
             {orders.map((order) => (
               <div key={order.id} className="bg-white rounded-lg shadow-sm border p-4 flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="flex-1">
-                  <div className="space-y-2 mb-3">
-                    {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span className="font-bold">{getProductName(item.product)} (x{item.quantity})</span>
-                        <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+                    {editingOrderId === order.id ? (
+                      <div className="space-y-2 mb-3">
+                        {editItems.map((eItem: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                          <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-yellow-50 p-2 rounded border border-yellow-100">
+                            <span className="truncate w-32 font-bold">{getProductName(eItem.product)}</span>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => {
+                                const newItems = [...editItems];
+                                if (newItems[idx].quantity > 1) {
+                                  newItems[idx].quantity -= 1;
+                                  setEditItems(newItems);
+                                } else {
+                                  newItems.splice(idx, 1);
+                                  setEditItems(newItems);
+                                }
+                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">-</button>
+                              <span className="w-6 text-center">{eItem.quantity}</span>
+                              <button onClick={() => {
+                                const newItems = [...editItems];
+                                newItems[idx].quantity += 1;
+                                setEditItems(newItems);
+                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">+</button>
+                            </div>
+                          </div>
+                        ))}
+                        <select 
+                          className="w-full text-xs p-2 border rounded"
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            const prod = allProducts.find(p => p.id === e.target.value);
+                            if (prod) {
+                              const existingIdx = editItems.findIndex(i => i.productId === prod.id);
+                              if (existingIdx >= 0) {
+                                const newItems = [...editItems];
+                                newItems[existingIdx].quantity += 1;
+                                setEditItems(newItems);
+                              } else {
+                                setEditItems([...editItems, { productId: prod.id, quantity: 1, price: prod.price, product: prod }]);
+                              }
+                            }
+                            e.target.value = "";
+                          }}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>+ 添加其他商品 (Add Item)</option>
+                          {allProducts.map(p => (
+                            <option key={p.id} value={p.id} disabled={p.stock <= 0}>{getProductName(p)}</option>
+                          ))}
+                        </select>
                       </div>
-                    ))}
-                  </div>
+                    ) : (
+                      <div className="space-y-3 mb-3">
+                        {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                          <div key={item.id} className="flex items-center gap-3">
+                            {item.product.imageUrl ? (
+                              <Image src={item.product.imageUrl} alt="product" width={48} height={48} className="object-cover rounded flex-shrink-0 border" />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
+                            )}
+                            <div className="flex flex-col flex-1">
+                              <span className="font-bold text-sm leading-tight">{getProductName(item.product)}</span>
+                              <div className="flex justify-between items-center mt-1">
+                                <span className="text-gray-600 text-xs">x{item.quantity}</span>
+                                <span className="text-gray-800 text-sm font-medium">{formatPrice(item.price * item.quantity)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   <div className="border-t pt-2 mt-2 space-y-2">
-                    <p className="text-sm font-semibold text-gray-800">{t("cart.total")}: {formatPrice(order.totalAmount)}</p>
+                    {editingOrderId === order.id ? (
+                      <p className="text-sm font-semibold text-gray-800">{t("cart.total")}: {formatPrice(editItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}</p>
+                    ) : (
+                      <p className="text-sm font-semibold text-gray-800">{t("cart.total")}: {formatPrice(order.totalAmount)}</p>
+                    )}
                     <p className="text-xs text-gray-500">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleString()}</p>
                     
                     {editingOrderId === order.id ? (
@@ -187,7 +269,7 @@ export default function AccountPage() {
                           placeholder={t("order.address")}
                         />
                         <div className="flex gap-2">
-                          <button onClick={() => handleUpdateOrder(order.id)} className="bg-blue-600 text-white text-xs px-3 py-1 rounded">保存 / Save</button>
+                          <button onClick={() => handleUpdateOrder(order.id)} disabled={editItems.length === 0} className="bg-blue-600 text-white text-xs px-3 py-1 rounded disabled:opacity-50">保存 / Save</button>
                           <button onClick={() => setEditingOrderId(null)} className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded">取消 / Cancel</button>
                         </div>
                       </div>

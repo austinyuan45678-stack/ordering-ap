@@ -44,39 +44,30 @@ export default function AdminPage() {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editOrderAddress, setEditOrderAddress] = useState("");
   const [editOrderPhone, setEditOrderPhone] = useState("");
+  const [editOrderItems, setEditOrderItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  const prevOrderCountRef = useRef(0);
-
-  const [newOrderNotification, setNewOrderNotification] = useState<{show: boolean, name: string}>({show: false, name: ""});
-
-  const [supportPhone, setSupportPhone] = useState("");
-  const [supportQrcodeFile, setSupportQrcodeFile] = useState<File | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-
-  const filteredOrders = filterStatus 
-    ? orders.filter(o => filterStatus === "CANCELLED" ? o.status.startsWith("CANCELLED") : o.status === filterStatus) 
-    : orders;
-
-  useEffect(() => {
-    if (status === "loading") return;
-    if (!session || session.user.role !== "ADMIN") {
-      router.push("/");
-    }
-  }, [session, status, router]);
-
-  const fetchData = async () => {
-    if (activeTab === "products" || activeTab === "bulkAdd") {
-      const res = await fetch("/api/products", { cache: "no-store" });
-      const data = await res.json();
-      setProducts(data);
-    } else if (activeTab === "orders" || activeTab === "stats") {
-      const res = await fetch("/api/orders", { cache: "no-store" });
-      const data = await res.json();
-      setOrders(data);
-    } else if (activeTab === "users") {
-      const res = await fetch("/api/users", { cache: "no-store" });
-      const data = await res.json();
-      setUsers(data);
+  const adminUpdateOrderDetails = async (orderId: string) => {
+    try {
+      const totalAmount = editOrderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          address: editOrderAddress,
+          phone: editOrderPhone,
+          items: editOrderItems,
+          totalAmount
+        })
+      });
+      if (res.ok) {
+        setEditingOrderId(null);
+        fetchData();
+        alert(t("admin.addSuccess") || "Updated successfully");
+      } else {
+        alert("Failed to update order");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -962,14 +953,79 @@ export default function AdminPage() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <ul className="list-disc pl-4">
-                      {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                        <li key={item.id} className="text-sm text-gray-900 whitespace-normal">
-                          {getProductName(item.product)} (x{item.quantity})
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="text-sm font-bold mt-1 text-blue-600">{t("cart.total")}: {formatPrice(order.totalAmount)}</div>
+                    {editingOrderId === order.id ? (
+                      <div className="space-y-2 w-64">
+                        {editOrderItems.map((eItem: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                          <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-yellow-50 p-1 rounded border border-yellow-100">
+                            <span className="truncate w-32 font-bold" title={eItem.product ? getProductName(eItem.product) : "商品"}>
+                              {eItem.product ? getProductName(eItem.product) : "商品"}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => {
+                                const newItems = [...editOrderItems];
+                                if (newItems[idx].quantity > 1) {
+                                  newItems[idx].quantity -= 1;
+                                  setEditOrderItems(newItems);
+                                } else {
+                                  newItems.splice(idx, 1);
+                                  setEditOrderItems(newItems);
+                                }
+                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">-</button>
+                              <span className="w-6 text-center text-xs">{eItem.quantity}</span>
+                              <button onClick={() => {
+                                const newItems = [...editOrderItems];
+                                newItems[idx].quantity += 1;
+                                setEditOrderItems(newItems);
+                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">+</button>
+                            </div>
+                          </div>
+                        ))}
+                        <select 
+                          className="w-full text-xs p-1 border rounded"
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            const prod = products.find((p: any) => p.id === e.target.value); // eslint-disable-line @typescript-eslint/no-explicit-any
+                            if (prod) {
+                              const existingIdx = editOrderItems.findIndex((i: any) => i.productId === prod.id); // eslint-disable-line @typescript-eslint/no-explicit-any
+                              if (existingIdx >= 0) {
+                                const newItems = [...editOrderItems];
+                                newItems[existingIdx].quantity += 1;
+                                setEditOrderItems(newItems);
+                              } else {
+                                setEditOrderItems([...editOrderItems, { productId: prod.id, quantity: 1, price: prod.price, product: prod }]);
+                              }
+                            }
+                            e.target.value = "";
+                          }}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>+ 添加商品 (Add Item)</option>
+                          {products.map((p: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                            <option key={p.id} value={p.id}>{getProductName(p)}</option>
+                          ))}
+                        </select>
+                        <div className="text-sm font-bold mt-1 text-blue-600">{t("cart.total")}: {formatPrice(editOrderItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}</div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 min-w-[200px]">
+                        {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                          <div key={item.id} className="flex items-center gap-2">
+                            {item.product.imageUrl ? (
+                              <Image src={item.product.imageUrl} alt="product" width={40} height={40} className="object-cover rounded flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
+                            )}
+                            <div className="flex flex-col">
+                              <span className="text-sm text-gray-900 font-medium leading-tight">
+                                {getProductName(item.product)} <span className="font-bold text-blue-600">(x{item.quantity})</span>
+                              </span>
+                              <span className="text-[10px] text-gray-400">ID: {item.productId.slice(-6).toUpperCase()}</span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="text-sm font-bold mt-2 pt-2 border-t text-blue-600">{t("cart.total")}: {formatPrice(order.totalAmount)}</div>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col gap-2 items-start">
