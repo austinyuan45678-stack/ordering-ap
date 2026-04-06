@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [editDescViValue, setEditDescViValue] = useState("");
   const [editStockValue, setEditStockValue] = useState("");
   const [editUnitValue, setEditUnitValue] = useState("");
+  const [editIdValue, setEditIdValue] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
 
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
@@ -265,6 +266,7 @@ export default function AdminPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
+          id: editIdValue,
           price: finalPrice, 
           name: editNameValue, 
           nameVi: editNameViValue, 
@@ -635,6 +637,10 @@ export default function AdminPage() {
                                   <option value="包/Gói">包/Gói</option>
                                 </select>
                               </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">商品 ID (SKU)</label>
+                                <input type="text" value={editIdValue} onChange={(e) => setEditIdValue(e.target.value)} className="px-2 py-1.5 border rounded text-sm w-full bg-gray-50" />
+                              </div>
                             </div>
 
                             <div className="flex space-x-3 pt-2 justify-end">
@@ -670,6 +676,7 @@ export default function AdminPage() {
                             <button
                               onClick={() => {
                                 setEditingProductId(product.id);
+                                setEditIdValue(product.id);
                                 setEditNameValue(product.name);
                                 setEditNameViValue(product.nameVi || "");
                                 setEditDescValue(product.description || "");

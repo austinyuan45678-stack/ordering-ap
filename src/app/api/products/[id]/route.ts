@@ -43,9 +43,15 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { price, isAvailable, name, nameVi, description, descriptionVi, imageUrl, stock, unit } = body;
+    const { id: newId, price, isAvailable, name, nameVi, description, descriptionVi, imageUrl, stock, unit } = body;
 
     const updateData: Record<string, number | boolean | string | null> = {};
+    if (newId !== undefined && newId !== id) {
+      // Check if new ID already exists to prevent crash
+      const existing = await prisma.product.findUnique({ where: { id: String(newId) } });
+      if (existing) return new NextResponse("ID already exists", { status: 400 });
+      updateData.id = String(newId);
+    }
     if (price !== undefined) updateData.price = parseFloat(price);
     if (isAvailable !== undefined) updateData.isAvailable = Boolean(isAvailable);
     if (name !== undefined) updateData.name = String(name);
