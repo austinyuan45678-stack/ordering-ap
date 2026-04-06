@@ -47,7 +47,7 @@ export default function StaffPage() {
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        window.location.reload();
       } else {
         alert(t("admin.updateStatusError"));
       }

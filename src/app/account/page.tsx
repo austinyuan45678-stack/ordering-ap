@@ -285,8 +285,7 @@ export default function AccountPage() {
 
       if (res.ok) {
         alert(t("admin.addSuccess") || "Success");
-        setOldPassword("");
-        setNewPassword("");
+        window.location.reload();
       } else {
         const text = await res.text();
         alert(text);
@@ -312,6 +311,7 @@ export default function AccountPage() {
 
       if (res.ok) {
         alert(t("admin.addSuccess") || "Success");
+        window.location.reload();
       } else {
         const text = await res.text();
         alert(text);
@@ -333,8 +333,7 @@ export default function AccountPage() {
         body: JSON.stringify({ status: "CANCELLED" }),
       });
       if (res.ok) {
-        const updatedOrder = await res.json();
-        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+        window.location.reload();
       } else {
         const text = await res.text();
         alert(text || "Failed to cancel order");
@@ -369,8 +368,7 @@ export default function AccountPage() {
         }),
       });
       if (res.ok) {
-        const updatedOrder = await res.json();
-        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+        window.location.reload();
       } else {
         const text = await res.text();
         alert(text || "Failed to update order");

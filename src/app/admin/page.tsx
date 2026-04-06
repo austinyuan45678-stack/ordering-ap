@@ -108,8 +108,7 @@ export default function AdminPage() {
         })
       });
       if (res.ok) {
-        const updatedOrder = await res.json();
-        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+        window.location.reload();
       } else {
         alert("Failed to update order");
         fetchData(); // revert
@@ -224,8 +223,8 @@ export default function AdminPage() {
       setStock("");
       setUnit("个/Cái");
       setFile(null);
-      fetchData();
       alert(t("admin.addSuccess"));
+      window.location.reload();
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       alert(`${t("admin.addError")}: ${error.message || "Unknown error"}`);
     } finally {
@@ -263,9 +262,8 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Bulk add failed");
       
       setBulkText("");
-      fetchData();
       alert(t("admin.bulkSuccess"));
-      setActiveTab("products");
+      window.location.reload();
     } catch (error) {
       alert(t("admin.bulkError"));
     } finally {
@@ -315,7 +313,7 @@ export default function AdminPage() {
       
       setEditingProductId(null);
       setEditFile(null);
-      fetchData();
+      window.location.reload();
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       alert(`${t("admin.updatePriceError")}: ${error.message || "Unknown error"}`);
     } finally {
@@ -332,7 +330,7 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error("Failed to update availability");
       
-      fetchData();
+      window.location.reload();
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       alert(t("admin.updateAvailError"));
     }
@@ -345,7 +343,7 @@ export default function AdminPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
-      fetchData();
+      window.location.reload();
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       alert(error.message);
     }
@@ -359,7 +357,7 @@ export default function AdminPage() {
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        window.location.reload();
       } else {
         alert(t("admin.updateStatusError"));
       }
@@ -375,7 +373,7 @@ export default function AdminPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        fetchData();
+        window.location.reload();
       } else {
         alert("Delete failed");
       }
@@ -396,6 +394,7 @@ export default function AdminPage() {
       });
       if (res.ok) {
         alert(t("admin.passSuccess") || "密码修改成功！");
+        window.location.reload();
       } else {
         const errText = await res.text();
         alert(errText || "修改失败");
@@ -414,7 +413,7 @@ export default function AdminPage() {
       });
       if (res.ok) {
         alert(t("admin.roleUpdated"));
-        fetchData();
+        window.location.reload();
       } else {
         const errText = await res.text();
         alert(errText || "Error changing role");
@@ -431,7 +430,7 @@ export default function AdminPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        fetchData();
+        window.location.reload();
       } else {
         const errText = await res.text();
         alert(errText || "Error deleting user");

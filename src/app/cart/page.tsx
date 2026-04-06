@@ -67,7 +67,7 @@ export default function CartPage() {
       }
 
       clearCart();
-      router.push("/account");
+      window.location.href = "/account";
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       alert(`${t("product.orderError")}: ${error.message}`);
     } finally {
