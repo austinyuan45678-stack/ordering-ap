@@ -333,7 +333,8 @@ export default function AccountPage() {
         body: JSON.stringify({ status: "CANCELLED" }),
       });
       if (res.ok) {
-        window.location.reload();
+        const updatedOrder = await res.json();
+        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       } else {
         const text = await res.text();
         alert(text || "Failed to cancel order");
@@ -368,7 +369,8 @@ export default function AccountPage() {
         }),
       });
       if (res.ok) {
-        window.location.reload();
+        const updatedOrder = await res.json();
+        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       } else {
         const text = await res.text();
         alert(text || "Failed to update order");

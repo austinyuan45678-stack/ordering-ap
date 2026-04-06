@@ -41,18 +41,23 @@ export default function StaffPage() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      // Optimistic update
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
-        window.location.reload();
+        const updatedOrder = await res.json();
+        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       } else {
         alert(t("admin.updateStatusError"));
+        fetchData();
       }
     } catch (err) {
       console.error(err);
+      fetchData();
     }
   };
 
