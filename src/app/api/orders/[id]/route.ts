@@ -38,11 +38,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { status } = body;
-
-    if (!status) {
-      return new NextResponse("Missing status", { status: 400 });
-    }
+    const { status, address, phone, items, totalAmount } = body;
 
     const order = await prisma.order.findUnique({ 
       where: { id },
@@ -55,7 +51,10 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    let finalStatus = status;
+    // Only Admin or User (if order is PENDING) can edit address/phone/items
+    const canEditDetails = session.user.role === "ADMIN" || (session.user.id === order.userId && order.status === "PENDING");
+
+    let finalStatus = status || order.status;
 
     if (session.user.role === "USER" && status === "CANCELLED") {
       finalStatus = "CANCELLED_BY_USER";
@@ -74,9 +73,29 @@ export async function PATCH(
       }
     }
 
+    const updateData: Record<string, unknown> = { status: finalStatus };
+
+    if (canEditDetails) {
+      if (address !== undefined) updateData.address = address;
+      if (phone !== undefined) updateData.phone = phone;
+      if (totalAmount !== undefined) updateData.totalAmount = totalAmount;
+
+      if (items && Array.isArray(items)) {
+        // Delete old items and recreate new ones for simplicity
+        await prisma.orderItem.deleteMany({ where: { orderId: id } });
+        updateData.items = {
+          create: items.map((item: { productId: string, quantity: number, price: number }) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price
+          }))
+        };
+      }
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id },
-      data: { status: finalStatus },
+      data: updateData,
       include: {
         user: true,
         items: { include: { product: true } }

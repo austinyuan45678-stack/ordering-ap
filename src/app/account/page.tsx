@@ -55,6 +55,28 @@ export default function AccountPage() {
     }
   };
 
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editAddress, setEditAddress] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+
+  const handleUpdateOrder = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: editAddress, phone: editPhone }),
+      });
+      if (res.ok) {
+        setOrders(orders.map(o => o.id === orderId ? { ...o, address: editAddress, phone: editPhone } : o));
+        setEditingOrderId(null);
+      } else {
+        alert("Failed to update");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleCancelOrder = async (orderId: string) => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
     try {
@@ -144,9 +166,37 @@ export default function AccountPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="border-t pt-2 mt-2">
+                  <div className="border-t pt-2 mt-2 space-y-2">
                     <p className="text-sm font-semibold text-gray-800">{t("cart.total")}: {formatPrice(order.totalAmount)}</p>
-                    <p className="text-xs text-gray-500 mt-1">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleString()}</p>
+                    
+                    {editingOrderId === order.id ? (
+                      <div className="space-y-2 bg-gray-50 p-2 rounded mt-2">
+                        <input 
+                          type="tel" 
+                          value={editPhone} 
+                          onChange={e => setEditPhone(e.target.value)} 
+                          className="w-full text-sm px-2 py-1 border rounded" 
+                          placeholder={t("order.phone")}
+                        />
+                        <textarea 
+                          value={editAddress} 
+                          onChange={e => setEditAddress(e.target.value)} 
+                          className="w-full text-sm px-2 py-1 border rounded" 
+                          rows={2} 
+                          placeholder={t("order.address")}
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => handleUpdateOrder(order.id)} className="bg-blue-600 text-white text-xs px-3 py-1 rounded">保存 / Save</button>
+                          <button onClick={() => setEditingOrderId(null)} className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded">取消 / Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-2 rounded text-sm text-gray-700">
+                        <p><strong>{t("order.phone")}:</strong> {order.phone}</p>
+                        <p><strong>{t("order.address")}:</strong> {order.address}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="sm:text-right w-full sm:w-auto flex flex-col justify-between items-end">
@@ -160,12 +210,24 @@ export default function AccountPage() {
                   </span>
                   
                   {order.status === "PENDING" && (
-                    <button 
-                      onClick={() => handleCancelOrder(order.id)}
-                      className="mt-3 text-xs text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md font-medium transition"
-                    >
-                      {t("account.cancelOrder")}
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          setEditingOrderId(order.id);
+                          setEditPhone(order.phone);
+                          setEditAddress(order.address);
+                        }}
+                        className="mt-3 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md font-medium transition whitespace-nowrap"
+                      >
+                        编辑信息 / Edit Info
+                      </button>
+                      <button 
+                        onClick={() => handleCancelOrder(order.id)}
+                        className="mt-3 text-xs text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md font-medium transition whitespace-nowrap"
+                      >
+                        {t("account.cancelOrder")}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
