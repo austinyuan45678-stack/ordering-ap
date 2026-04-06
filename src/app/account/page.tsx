@@ -248,15 +248,18 @@ export default function AccountPage() {
 
   const [allProducts, setAllProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
     if (session?.user) {
-      fetch("/api/orders", { cache: "no-store" })
-        .then((res) => res.json())
-        .then((data) => setOrders(data));
-      fetch("/api/products", { cache: "no-store" })
-        .then((res) => res.json())
-        .then(setAllProducts);
+      Promise.all([
+        fetch("/api/orders", { cache: "no-store" }).then(res => res.json()),
+        fetch("/api/products", { cache: "no-store" }).then(res => res.json())
+      ]).then(([ordersData, productsData]) => {
+        setOrders(ordersData);
+        setAllProducts(productsData);
+        setIsInitialLoading(false);
+      });
     }
   }, [session]);
 
@@ -396,7 +399,11 @@ export default function AccountPage() {
 
       <div>
         <h2 className="text-xl font-semibold mb-4">{t("account.orders")}</h2>
-        {orders.length === 0 ? (
+        {isInitialLoading ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : orders.length === 0 ? (
           <p className="text-gray-500">{t("account.noOrders")}</p>
         ) : (
           <div className="space-y-4">

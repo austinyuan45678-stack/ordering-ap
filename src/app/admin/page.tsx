@@ -56,19 +56,26 @@ export default function AdminPage() {
     ? orders.filter(o => filterStatus === "CANCELLED" ? o.status.startsWith("CANCELLED") : o.status === filterStatus) 
     : orders;
 
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
   const fetchData = async () => {
-    if (activeTab === "products" || activeTab === "bulkAdd") {
-      const res = await fetch("/api/products", { cache: "no-store" });
-      const data = await res.json();
-      setProducts(data);
-    } else if (activeTab === "orders" || activeTab === "stats") {
-      const res = await fetch("/api/orders", { cache: "no-store" });
-      const data = await res.json();
-      setOrders(data);
-    } else if (activeTab === "users") {
-      const res = await fetch("/api/users", { cache: "no-store" });
-      const data = await res.json();
-      setUsers(data);
+    setIsInitialLoading(true);
+    try {
+      if (activeTab === "products" || activeTab === "bulkAdd") {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        const data = await res.json();
+        setProducts(data);
+      } else if (activeTab === "orders" || activeTab === "stats") {
+        const res = await fetch("/api/orders", { cache: "no-store" });
+        const data = await res.json();
+        setOrders(data);
+      } else if (activeTab === "users") {
+        const res = await fetch("/api/users", { cache: "no-store" });
+        const data = await res.json();
+        setUsers(data);
+      }
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
@@ -730,11 +737,15 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
-              {products.length === 0 && (
+              {isInitialLoading ? (
+                <div className="col-span-2 text-center py-10 flex justify-center bg-white rounded-lg border border-dashed">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : products.length === 0 ? (
                 <div className="col-span-2 text-center py-10 text-gray-500 bg-white rounded-lg border border-dashed">
                   {t("general.noData")}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -880,13 +891,19 @@ export default function AdminPage() {
                   </td>
                 </tr>
               ))}
-              {users.length === 0 && (
+              {isInitialLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-10 text-center">
+                    <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>
+                  </td>
+                </tr>
+              ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
                     {t("general.noData")}
                   </td>
                 </tr>
-              )}
+              ) : null}
             </tbody>
           </table>
         </div>
@@ -1130,13 +1147,19 @@ export default function AdminPage() {
                   </td>
                 </tr>
               ))}
-              {filteredOrders.length === 0 && (
+              {isInitialLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-10 text-center">
+                    <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
                     {t("general.noData")}
                   </td>
                 </tr>
-              )}
+              ) : null}
             </tbody>
           </table>
           </div>
