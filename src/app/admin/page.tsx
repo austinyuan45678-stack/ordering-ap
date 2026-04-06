@@ -46,6 +46,7 @@ export default function AdminPage() {
   const [editOrderAddress, setEditOrderAddress] = useState("");
   const [editOrderPhone, setEditOrderPhone] = useState("");
   const [editOrderItems, setEditOrderItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [showAddMenu, setShowAddMenu] = useState(false);
 
   const [supportPhone, setSupportPhone] = useState("");
   const [supportQrcodeFile, setSupportQrcodeFile] = useState<File | null>(null);
@@ -1005,30 +1006,48 @@ export default function AdminPage() {
                             </div>
                           </div>
                         ))}
-                        <select 
-                          className="w-full text-xs p-1 border rounded"
-                          onChange={(e) => {
-                            if (!e.target.value) return;
-                            const prod = products.find((p: any) => p.id === e.target.value); // eslint-disable-line @typescript-eslint/no-explicit-any
-                            if (prod) {
-                              const existingIdx = editOrderItems.findIndex((i: any) => i.productId === prod.id); // eslint-disable-line @typescript-eslint/no-explicit-any
-                              if (existingIdx >= 0) {
-                                const newItems = [...editOrderItems];
-                                newItems[existingIdx].quantity += 1;
-                                setEditOrderItems(newItems);
-                              } else {
-                                setEditOrderItems([...editOrderItems, { productId: prod.id, quantity: 1, price: prod.price, product: prod }]);
-                              }
-                            }
-                            e.target.value = "";
-                          }}
-                          defaultValue=""
-                        >
-                          <option value="" disabled>+ 添加商品 (Add Item)</option>
-                          {products.map((p: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                            <option key={p.id} value={p.id}>{getProductName(p)}</option>
-                          ))}
-                        </select>
+                        <div className="relative pt-1">
+                          <button 
+                            className="w-full text-xs p-1.5 border border-yellow-300 rounded bg-white shadow-sm font-medium text-gray-700 flex justify-between items-center"
+                            onClick={() => setShowAddMenu(!showAddMenu)}
+                          >
+                            <span>+ 添加商品 (Add Item)</span>
+                            <span>▼</span>
+                          </button>
+                          {showAddMenu && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 shadow-xl rounded-lg max-h-60 overflow-y-auto">
+                              {products.length === 0 && <div className="p-4 text-center text-gray-500">Loading products...</div>}
+                              {products.map((p: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                                <div 
+                                  key={p.id} 
+                                  className={`flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  onClick={() => {
+                                    if (p.stock <= 0) return;
+                                    const existingIdx = editOrderItems.findIndex((i: any) => i.productId === p.id); // eslint-disable-line @typescript-eslint/no-explicit-any
+                                    if (existingIdx >= 0) {
+                                      const newItems = [...editOrderItems];
+                                      newItems[existingIdx].quantity += 1;
+                                      setEditOrderItems(newItems);
+                                    } else {
+                                      setEditOrderItems([...editOrderItems, { productId: p.id, quantity: 1, price: p.price, product: p }]);
+                                    }
+                                    setShowAddMenu(false);
+                                  }}
+                                >
+                                  {p.imageUrl ? (
+                                    <Image src={p.imageUrl} alt="img" width={32} height={32} className="object-cover rounded border flex-shrink-0" />
+                                  ) : (
+                                    <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
+                                  )}
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="truncate text-xs font-bold text-gray-800">{getProductName(p)}</span>
+                                    <span className="text-[10px] text-blue-600 font-semibold">{formatPrice(p.price)}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <div className="text-sm font-bold mt-1 text-blue-600">{t("cart.total")}: {formatPrice(editOrderItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}</div>
                       </div>
                     ) : (
@@ -1079,6 +1098,7 @@ export default function AdminPage() {
                         ) : (
                           <button onClick={() => {
                             setEditingOrderId(order.id);
+                            setShowAddMenu(false);
                             setEditOrderAddress(order.address);
                             setEditOrderPhone(order.phone);
                             setEditOrderItems(order.items.map((i: any) => ({ ...i }))); // eslint-disable-line @typescript-eslint/no-explicit-any

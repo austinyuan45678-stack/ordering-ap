@@ -69,31 +69,48 @@ function OrderCard({ order, t, formatPrice, getProductName, onCancel, onUpdate, 
                 </div>
               </div>
             ))}
-            <div className="pt-2">
-              <select 
-                className="w-full text-sm p-2.5 border border-yellow-300 rounded-lg bg-white shadow-sm focus:ring-yellow-500 focus:border-yellow-500 font-medium text-gray-700 outline-none"
-                onChange={(e) => {
-                  if (!e.target.value) return;
-                  const prod = allProducts.find((p: any) => p.id === e.target.value); // eslint-disable-line @typescript-eslint/no-explicit-any
-                  if (prod) {
-                    const existingIdx = editItems.findIndex((i: any) => i.productId === prod.id); // eslint-disable-line @typescript-eslint/no-explicit-any
-                    if (existingIdx >= 0) {
-                      const newItems = [...editItems];
-                      newItems[existingIdx].quantity += 1;
-                      setEditItems(newItems);
-                    } else {
-                      setEditItems([...editItems, { productId: prod.id, quantity: 1, price: prod.price, product: prod }]);
-                    }
-                  }
-                  e.target.value = "";
-                }}
-                defaultValue=""
+            <div className="pt-2 relative">
+              <button 
+                className="w-full text-sm p-2.5 border border-yellow-300 rounded-lg bg-white shadow-sm font-medium text-gray-700 flex justify-between items-center"
+                onClick={() => setShowAddMenu(!showAddMenu)}
               >
-                <option value="" disabled>+ 添加其他商品 (Add Item)</option>
-                {allProducts.map((p: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                  <option key={p.id} value={p.id} disabled={p.stock <= 0}>{getProductName(p)}</option>
-                ))}
-              </select>
+                <span>+ 添加其他商品 (Add Item)</span>
+                <span>▼</span>
+              </button>
+              {showAddMenu && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 shadow-xl rounded-lg max-h-60 overflow-y-auto">
+                  {allProducts.length === 0 && <div className="p-4 text-center text-gray-500">Loading products...</div>}
+                  {allProducts.map((p: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                    <div 
+                      key={p.id} 
+                      className={`flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => {
+                        if (p.stock <= 0) return;
+                        const existingIdx = editItems.findIndex((i: any) => i.productId === p.id); // eslint-disable-line @typescript-eslint/no-explicit-any
+                        if (existingIdx >= 0) {
+                          const newItems = [...editItems];
+                          newItems[existingIdx].quantity += 1;
+                          setEditItems(newItems);
+                        } else {
+                          setEditItems([...editItems, { productId: p.id, quantity: 1, price: p.price, product: p }]);
+                        }
+                        setShowAddMenu(false);
+                      }}
+                    >
+                      {p.imageUrl ? (
+                        <Image src={p.imageUrl} alt="img" width={40} height={40} className="object-cover rounded border flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
+                      )}
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="truncate text-sm font-bold text-gray-800">{getProductName(p)}</span>
+                        <span className="text-xs text-blue-600 font-semibold">{formatPrice(p.price)}</span>
+                      </div>
+                      {p.stock <= 0 && <span className="text-xs text-red-500 font-bold px-2">Sold Out</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : (
