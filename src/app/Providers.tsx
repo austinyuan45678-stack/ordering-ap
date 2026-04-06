@@ -509,6 +509,17 @@ function GlobalFeatures() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <AppConfigProvider>
+        {children}
+      </AppConfigProvider>
+    </SessionProvider>
+  );
+}
+
+function AppConfigProvider({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
   const [lang, setLang] = useState<Language>("zh");
   const [currency, setCurrency] = useState<Currency>("CNY");
   const [priceMode, setPriceMode] = useState<PriceMode>("DUAL");
@@ -582,6 +593,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const strCny = `¥${priceCny.toFixed(2)}`;
     const strVnd = `₫${priceVnd.toLocaleString()}`;
 
+    // Normal users and staff ONLY see VND
+    if (session?.user?.role !== "ADMIN") {
+      return strVnd;
+    }
+
+    // Admins see whatever their mode is
     if (priceMode === "SINGLE") {
       return currency === "CNY" ? strCny : strVnd;
     } else {
@@ -590,86 +607,98 @@ export function Providers({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SessionProvider>
-      <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE, getProductName, getProductDesc, getProductUnit }}>
-        <GlobalFeatures />
-        <CartProvider>
-          {children}
-          {(supportPhone || supportQrcode) && (
-            <div className="fixed bottom-6 right-6 z-[9998] flex flex-col items-end">
-              {showContactMenu && (
-                <div className="bg-white rounded-lg shadow-xl border p-2 mb-4 flex flex-col gap-2 min-w-[160px] animate-bounce-in">
-                  {supportQrcode && (
-                    <button
-                      className="flex items-center gap-3 px-4 py-3 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors font-medium text-sm text-left"
-                      onClick={() => {
-                        setShowContactMenu(false);
-                        setShowQrModal(true);
-                      }}
-                    >
-                      <MessageCircle className="h-5 w-5 flex-shrink-0" />
-                      {t("account.chat")}
-                    </button>
-                  )}
-                  {supportPhone && (
-                    <a
-                      href={`tel:${supportPhone}`}
-                      className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors font-medium text-sm text-left"
-                      onClick={() => setShowContactMenu(false)}
-                    >
-                      <PhoneCall className="h-5 w-5 flex-shrink-0" />
-                      {t("account.call")}
-                    </a>
-                  )}
-                </div>
-              )}
-              <button
-                onClick={() => setShowContactMenu(!showContactMenu)}
-                className="bg-green-500 text-white p-4 rounded-full shadow-xl hover:bg-green-600 transition-transform active:scale-95 flex items-center justify-center group"
-                title={t("account.contactUs")}
-              >
-                {showContactMenu ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-                {!showContactMenu && (
-                  <span className="max-w-0 overflow-hidden group-hover:max-w-[150px] transition-all duration-300 ease-in-out whitespace-nowrap ml-0 group-hover:ml-2 font-medium hidden sm:block">
-                    {t("account.contactUs")}
-                  </span>
+    <AppContext.Provider value={{ lang, setLang: changeLang, t, currency, setCurrency: changeCurrency, priceMode, setPriceMode: changePriceMode, formatPrice, exchangeRate: EXCHANGE_RATE, getProductName, getProductDesc, getProductUnit }}>
+      <GlobalFeatures />
+      <CartProvider>
+        {children}
+        {(supportPhone || supportQrcode) && (
+          <div className="fixed bottom-6 right-6 z-[9998] flex flex-col items-end">
+            {showContactMenu && (
+              <div className="bg-white rounded-lg shadow-xl border p-2 mb-4 flex flex-col gap-2 min-w-[160px] animate-bounce-in">
+                {supportQrcode && (
+                  <button
+                    className="flex items-center gap-3 px-4 py-3 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors font-medium text-sm text-left"
+                    onClick={() => {
+                      setShowContactMenu(false);
+                      setShowQrModal(true);
+                    }}
+                  >
+                    <MessageCircle className="h-5 w-5 flex-shrink-0" />
+                    {t("account.chat")}
+                  </button>
                 )}
-              </button>
-            </div>
-          )}
-
-          {showQrModal && supportQrcode && (
-            <div 
-              className="fixed inset-0 z-[9999] bg-black/80 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
-              onClick={() => setShowQrModal(false)}
-            >
-              <button 
-                className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white bg-white/20 hover:bg-white/40 rounded-full p-2"
-                onClick={(e) => { e.stopPropagation(); setShowQrModal(false); }}
-              >
-                <X className="h-6 w-6" />
-              </button>
-              <div className="bg-white p-6 rounded-xl flex flex-col items-center max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-6 text-gray-800 text-center">{t("account.chat")}</h3>
-                <div className="relative w-64 h-64 mb-6 border-4 border-green-500 rounded-lg overflow-hidden">
-                  <Image src={supportQrcode} alt="WeChat QR Code" fill className="object-contain" />
-                </div>
-                <p className="text-sm text-gray-500 text-center">
-                  {lang === "zh" ? "请长按保存图片或直接使用微信扫一扫" : 
-                   lang === "vi" ? "Vui lòng lưu hình ảnh hoặc sử dụng WeChat để quét" : 
-                   "Save image or use WeChat to scan"}
-                </p>
-                <button 
-                  onClick={() => setShowQrModal(false)}
-                  className="mt-6 w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  {t("admin.cancel") || "Close"}
-                </button>
+                {supportPhone && (
+                  <button
+                    className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors font-medium text-sm text-left"
+                    onClick={() => {
+                      navigator.clipboard.writeText(supportPhone);
+                      alert(lang === "zh" ? "微信号/电话已复制，正在尝试打开微信..." : lang === "en" ? "WeChat ID copied. Attempting to open WeChat..." : "Đã sao chép WeChat ID. Đang thử mở WeChat...");
+                      setShowContactMenu(false);
+                      window.location.href = "weixin://";
+                    }}
+                  >
+                    <MessageCircle className="h-5 w-5 flex-shrink-0" />
+                    {t("account.chat")}
+                  </button>
+                )}
+                {supportPhone && (
+                  <a
+                    href={`tel:${supportPhone}`}
+                    className="flex items-center gap-3 px-4 py-3 bg-gray-50 text-gray-700 rounded-md hover:bg-gray-100 transition-colors font-medium text-sm text-left"
+                    onClick={() => setShowContactMenu(false)}
+                  >
+                    <PhoneCall className="h-5 w-5 flex-shrink-0" />
+                    {t("account.call")}
+                  </a>
+                )}
               </div>
+            )}
+            <button
+              onClick={() => setShowContactMenu(!showContactMenu)}
+              className="bg-green-500 text-white p-4 rounded-full shadow-xl hover:bg-green-600 transition-transform active:scale-95 flex items-center justify-center group"
+              title={t("account.contactUs")}
+            >
+              {showContactMenu ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+              {!showContactMenu && (
+                <span className="max-w-0 overflow-hidden group-hover:max-w-[150px] transition-all duration-300 ease-in-out whitespace-nowrap ml-0 group-hover:ml-2 font-medium hidden sm:block">
+                  {t("account.contactUs")}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+
+        {showQrModal && supportQrcode && (
+          <div 
+            className="fixed inset-0 z-[9999] bg-black/80 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
+            onClick={() => setShowQrModal(false)}
+          >
+            <button 
+              className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white bg-white/20 hover:bg-white/40 rounded-full p-2"
+              onClick={(e) => { e.stopPropagation(); setShowQrModal(false); }}
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <div className="bg-white p-6 rounded-xl flex flex-col items-center max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+              <h3 className="text-xl font-bold mb-6 text-gray-800 text-center">{t("account.chat")}</h3>
+              <div className="relative w-64 h-64 mb-6 border-4 border-green-500 rounded-lg overflow-hidden">
+                <Image src={supportQrcode} alt="WeChat QR Code" fill className="object-contain" />
+              </div>
+              <p className="text-sm text-gray-500 text-center">
+                {lang === "zh" ? "请长按保存图片或直接使用微信扫一扫" : 
+                 lang === "vi" ? "Vui lòng lưu hình ảnh hoặc sử dụng WeChat để quét" : 
+                 "Save image or use WeChat to scan"}
+              </p>
+              <button 
+                onClick={() => setShowQrModal(false)}
+                className="mt-6 w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                {t("admin.cancel") || "Close"}
+              </button>
             </div>
-          )}
-        </CartProvider>
-      </AppContext.Provider>
-    </SessionProvider>
+          </div>
+        )}
+      </CartProvider>
+    </AppContext.Provider>
   );
 }

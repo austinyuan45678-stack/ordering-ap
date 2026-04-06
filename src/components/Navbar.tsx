@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useApp } from "@/app/Providers";
 import { useCart } from "@/components/CartContext";
-import { LogOut, User, Globe, ShoppingBag, Banknote, SplitSquareHorizontal, ShoppingCart, Menu, X } from "lucide-react";
+import { LogOut, User, Globe, ShoppingBag, ShoppingCart, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar() {
   const { data: session } = useSession();
-  const { lang, setLang, t, currency, setCurrency, priceMode, setPriceMode } = useApp();
+  const { lang, setLang, t } = useApp();
   const { totalItems } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -52,14 +52,13 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            <button
-              onClick={() => setCurrency(currency === "CNY" ? "VND" : "CNY")}
-              className="text-gray-500 hover:text-gray-700 flex items-center p-2"
-              title="Change Currency"
-            >
-              <Banknote className="h-5 w-5 sm:mr-1" />
-              <span className="hidden sm:inline">{currency}</span>
-            </button>
+            {session?.user?.role === "ADMIN" && (
+              <>
+                <Link href="/admin" className="text-gray-500 hover:text-gray-700 flex items-center p-2" title="Admin Settings">
+                  <span className="hidden sm:inline text-sm font-medium">⚙️ {t("nav.admin")}</span>
+                </Link>
+              </>
+            )}
             <button
               onClick={() => {
                 const nextLang = lang === "zh" ? "en" : lang === "en" ? "vi" : "zh";
@@ -70,14 +69,6 @@ export default function Navbar() {
             >
               <Globe className="h-5 w-5 sm:mr-1" />
               <span className="hidden sm:inline">{lang.toUpperCase()}</span>
-            </button>
-            <button
-              onClick={() => setPriceMode(priceMode === "DUAL" ? "SINGLE" : "DUAL")}
-              className="text-gray-500 hover:text-gray-700 flex items-center p-2"
-              title={priceMode === "DUAL" ? t("nav.priceMode.DUAL") : t("nav.priceMode.SINGLE")}
-            >
-              <SplitSquareHorizontal className="h-5 w-5 sm:mr-1" />
-              <span className="hidden sm:inline">{priceMode === "DUAL" ? t("nav.priceMode.DUAL") : t("nav.priceMode.SINGLE")}</span>
             </button>
             {session ? (
               <div className="flex items-center space-x-2 sm:space-x-4">

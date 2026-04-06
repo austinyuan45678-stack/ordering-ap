@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/app/Providers";
 import Image from "next/image";
 
+import { Banknote, SplitSquareHorizontal } from "lucide-react";
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { t, formatPrice, currency, exchangeRate, getProductName, getProductUnit } = useApp();
+  const { t, formatPrice, currency, setCurrency, priceMode, setPriceMode, exchangeRate, getProductName, getProductUnit } = useApp();
 
   const [products, setProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -454,7 +456,25 @@ export default function AdminPage() {
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <h1 className="text-3xl font-bold">{t("admin.dashboard")}</h1>
-        <div className="flex space-x-2 sm:space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <button
+            onClick={() => setCurrency(currency === "CNY" ? "VND" : "CNY")}
+            className="text-gray-500 hover:text-gray-700 flex items-center p-2 border rounded bg-white shadow-sm"
+            title="Change Currency"
+          >
+            <Banknote className="h-5 w-5 sm:mr-1" />
+            <span className="hidden sm:inline">{currency}</span>
+          </button>
+          <button
+            onClick={() => setPriceMode(priceMode === "DUAL" ? "SINGLE" : "DUAL")}
+            className="text-gray-500 hover:text-gray-700 flex items-center p-2 border rounded bg-white shadow-sm"
+            title={priceMode === "DUAL" ? t("nav.priceMode.DUAL") : t("nav.priceMode.SINGLE")}
+          >
+            <SplitSquareHorizontal className="h-5 w-5 sm:mr-1" />
+            <span className="hidden sm:inline">{priceMode === "DUAL" ? t("nav.priceMode.DUAL") : t("nav.priceMode.SINGLE")}</span>
+          </button>
+        </div>
+        <div className="flex space-x-2 sm:space-x-4 w-full sm:w-auto">
           <button
             onClick={() => setActiveTab("products")}
             className={`px-3 py-2 rounded-md font-medium transition ${
