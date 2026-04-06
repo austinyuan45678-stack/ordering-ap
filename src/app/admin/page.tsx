@@ -46,6 +46,14 @@ export default function AdminPage() {
   const [editOrderPhone, setEditOrderPhone] = useState("");
   const [editOrderItems, setEditOrderItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 
+  const [supportPhone, setSupportPhone] = useState("");
+  const [supportQrcodeFile, setSupportQrcodeFile] = useState<File | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+
+  const filteredOrders = filterStatus 
+    ? orders.filter(o => filterStatus === "CANCELLED" ? o.status.startsWith("CANCELLED") : o.status === filterStatus) 
+    : orders;
+
   const fetchData = async () => {
     if (activeTab === "products" || activeTab === "bulkAdd") {
       const res = await fetch("/api/products", { cache: "no-store" });
