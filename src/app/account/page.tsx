@@ -490,7 +490,7 @@ export default function AccountPage() {
                           placeholder={t("order.address")}
                         />
                         <div className="flex gap-3 pt-2">
-                          <button onClick={() => handleUpdateOrder(order.id)} disabled={editItems.length === 0 || isUpdating} className="flex-1 bg-blue-600 text-white text-sm font-bold py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:shadow-none active:scale-[0.98]">
+                          <button onClick={() => handleUpdateOrder(order.id, editAddress, editPhone, editItems)} disabled={editItems.length === 0 || isUpdating} className="flex-1 bg-blue-600 text-white text-sm font-bold py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:shadow-none active:scale-[0.98]">
                             {isUpdating ? "保存中..." : "保存更改 / Save"}
                           </button>
                           <button onClick={() => setEditingOrderId(null)} className="flex-1 bg-white text-gray-700 border border-gray-300 text-sm font-bold py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition-colors active:scale-[0.98]">
