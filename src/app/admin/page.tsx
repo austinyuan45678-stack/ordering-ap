@@ -308,28 +308,6 @@ export default function AdminPage() {
     }
   };
 
-  const adminUpdateOrderDetails = async (orderId: string) => {
-    try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          address: editOrderAddress,
-          phone: editOrderPhone 
-        })
-      });
-      if (res.ok) {
-        setEditingOrderId(null);
-        fetchData();
-        alert(t("admin.addSuccess") || "Updated successfully");
-      } else {
-        alert("Failed to update order");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const adminDeleteOrder = async (orderId: string) => {
     if (!confirm(t("admin.deleteOrderConfirm"))) return;
     try {
