@@ -237,6 +237,9 @@ export default function AccountPage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passLoading, setPassLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [defaultPhone, setDefaultPhone] = useState("");
+  const [defaultAddress, setDefaultAddress] = useState("");
   const router = useRouter();
   const { t, formatPrice, getProductName } = useApp();
 
@@ -254,10 +257,15 @@ export default function AccountPage() {
     if (session?.user) {
       Promise.all([
         fetch("/api/orders", { cache: "no-store" }).then(res => res.json()),
-        fetch("/api/products", { cache: "no-store" }).then(res => res.json())
-      ]).then(([ordersData, productsData]) => {
+        fetch("/api/products", { cache: "no-store" }).then(res => res.json()),
+        fetch("/api/users/profile", { cache: "no-store" }).then(res => res.json())
+      ]).then(([ordersData, productsData, profileData]) => {
         setOrders(ordersData);
         setAllProducts(productsData);
+        if (profileData) {
+          setDefaultPhone(profileData.phone || "");
+          setDefaultAddress(profileData.address || "");
+        }
         setIsInitialLoading(false);
       });
     }
@@ -287,6 +295,31 @@ export default function AccountPage() {
       alert("网络错误，请稍后再试 / Lỗi mạng, vui lòng thử lại sau");
     } finally {
       setPassLoading(false);
+    }
+  };
+
+  const handleProfileChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user) return;
+    setProfileLoading(true);
+
+    try {
+      const res = await fetch(`/api/users/profile`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: defaultPhone, address: defaultAddress }),
+      });
+
+      if (res.ok) {
+        alert(t("admin.addSuccess") || "Success");
+      } else {
+        const text = await res.text();
+        alert(text);
+      }
+    } catch (err) {
+      alert("网络错误，请稍后再试 / Lỗi mạng, vui lòng thử lại sau");
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -367,7 +400,7 @@ export default function AccountPage() {
         <div className="flex justify-between items-start mb-4">
           <h1 className="text-2xl font-bold">{t("account.title")}</h1>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <p className="text-gray-600">
               <strong>{t("account.name")}:</strong> {session.user.name || t("account.notSet")}
@@ -378,6 +411,28 @@ export default function AccountPage() {
             <p className="text-gray-600 mt-2">
               <strong>{t("account.role")}:</strong> {session.user.role}
             </p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">{t("account.profile") || "个人信息管理"}</h3>
+            <form onSubmit={handleProfileChange} className="space-y-3">
+              <input
+                type="tel"
+                placeholder={t("account.defaultPhone") || "默认收件电话"}
+                value={defaultPhone}
+                onChange={e => setDefaultPhone(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md text-sm"
+              />
+              <textarea
+                placeholder={t("account.defaultAddress") || "默认配送地址"}
+                value={defaultAddress}
+                onChange={e => setDefaultAddress(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md text-sm"
+                rows={2}
+              />
+              <button disabled={profileLoading} type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 w-full disabled:opacity-50">
+                {profileLoading ? t("general.loading") : t("account.saveProfile") || "保存信息"}
+              </button>
+            </form>
           </div>
           <div>
             <h3 className="font-semibold mb-2">{t("account.password")}</h3>

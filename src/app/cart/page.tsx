@@ -4,7 +4,7 @@ import { useCart } from "@/components/CartContext";
 import { useApp } from "@/app/Providers";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Trash2, Plus, Minus } from "lucide-react";
 
@@ -17,6 +17,23 @@ export default function CartPage() {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [savedProfile, setSavedProfile] = useState<{phone: string, address: string} | null>(null);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetch("/api/users/profile", { cache: "no-store" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.phone || data.address) {
+            setSavedProfile({ phone: data.phone || "", address: data.address || "" });
+            // Auto-fill initially if empty
+            if (!phone && data.phone) setPhone(data.phone);
+            if (!address && data.address) setAddress(data.address);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [session]);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +132,31 @@ export default function CartPage() {
             <span>{t("cart.total")}</span>
             <span className="text-blue-600">{formatPrice(totalPrice)}</span>
           </div>
+
+          {savedProfile && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button 
+                type="button" 
+                onClick={() => {
+                  setPhone(savedProfile.phone);
+                  setAddress(savedProfile.address);
+                }} 
+                className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded hover:bg-green-100 transition-colors"
+              >
+                {t("cart.useSaved")}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setPhone("");
+                  setAddress("");
+                }} 
+                className="text-xs bg-gray-50 text-gray-700 border border-gray-200 px-3 py-1.5 rounded hover:bg-gray-100 transition-colors"
+              >
+                {t("cart.manualEntry")}
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleCheckout} className="space-y-4">
             <div>
