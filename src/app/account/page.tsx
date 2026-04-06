@@ -6,6 +6,200 @@ import { useApp } from "@/app/Providers";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+function OrderCard({ order, t, formatPrice, getProductName, onCancel, onUpdate, allProducts }: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [isEditing, setIsEditing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editAddress, setEditAddress] = useState(order.address);
+  const [editPhone, setEditPhone] = useState(order.phone);
+  const [editItems, setEditItems] = useState(order.items.map((i: any) => ({ ...i }))); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const handleSave = async () => {
+    setIsUpdating(true);
+    await onUpdate(order.id, editAddress, editPhone, editItems);
+    setIsEditing(false);
+    setIsUpdating(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditAddress(order.address);
+    setEditPhone(order.phone);
+    setEditItems(order.items.map((i: any) => ({ ...i }))); // eslint-disable-line @typescript-eslint/no-explicit-any
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border p-4 flex flex-col sm:flex-row justify-between items-start gap-4 transition-all hover:shadow-md">
+      <div className="flex-1 w-full">
+        {isEditing ? (
+          <div className="space-y-3 mb-4 bg-yellow-50 p-3 sm:p-4 rounded-lg border border-yellow-200">
+            <h3 className="text-sm font-bold text-yellow-800 mb-2 flex items-center gap-2">
+              <span className="bg-yellow-400 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">🛒</span>
+              修改购物车 (Edit Cart)
+            </h3>
+            {editItems.map((eItem: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+              <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-white p-2 rounded shadow-sm border border-yellow-100">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {eItem.product?.imageUrl ? (
+                    <Image src={eItem.product.imageUrl} alt="img" width={40} height={40} className="object-cover rounded border flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    <span className="truncate w-24 sm:w-40 font-bold leading-tight text-gray-800">{getProductName(eItem.product)}</span>
+                    <span className="text-xs text-blue-600 font-semibold">{formatPrice(eItem.price)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-50 rounded-full border px-1 py-1 flex-shrink-0">
+                  <button onClick={() => {
+                    const newItems = [...editItems];
+                    if (newItems[idx].quantity > 1) {
+                      newItems[idx].quantity -= 1;
+                      setEditItems(newItems);
+                    } else {
+                      newItems.splice(idx, 1);
+                      setEditItems(newItems);
+                    }
+                  }} className="w-6 h-6 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-gray-100 text-gray-700 font-bold transition-transform active:scale-95">-</button>
+                  <span className="w-6 text-center font-bold text-gray-800">{eItem.quantity}</span>
+                  <button onClick={() => {
+                    const newItems = [...editItems];
+                    newItems[idx].quantity += 1;
+                    setEditItems(newItems);
+                  }} className="w-6 h-6 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-gray-100 text-gray-700 font-bold transition-transform active:scale-95">+</button>
+                </div>
+              </div>
+            ))}
+            <div className="pt-2">
+              <select 
+                className="w-full text-sm p-2.5 border border-yellow-300 rounded-lg bg-white shadow-sm focus:ring-yellow-500 focus:border-yellow-500 font-medium text-gray-700 outline-none"
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  const prod = allProducts.find((p: any) => p.id === e.target.value); // eslint-disable-line @typescript-eslint/no-explicit-any
+                  if (prod) {
+                    const existingIdx = editItems.findIndex((i: any) => i.productId === prod.id); // eslint-disable-line @typescript-eslint/no-explicit-any
+                    if (existingIdx >= 0) {
+                      const newItems = [...editItems];
+                      newItems[existingIdx].quantity += 1;
+                      setEditItems(newItems);
+                    } else {
+                      setEditItems([...editItems, { productId: prod.id, quantity: 1, price: prod.price, product: prod }]);
+                    }
+                  }
+                  e.target.value = "";
+                }}
+                defaultValue=""
+              >
+                <option value="" disabled>+ 添加其他商品 (Add Item)</option>
+                {allProducts.map((p: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                  <option key={p.id} value={p.id} disabled={p.stock <= 0}>{getProductName(p)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3 mb-4">
+            {order.items.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+              <div key={item.id} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg border border-transparent hover:border-gray-100 transition-colors">
+                {item.product?.imageUrl ? (
+                  <Image src={item.product.imageUrl} alt="product" width={56} height={56} className="object-cover rounded-md border shadow-sm flex-shrink-0" />
+                ) : (
+                  <div className="w-14 h-14 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 flex-shrink-0">No Img</div>
+                )}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="font-bold text-base text-gray-900 leading-tight truncate">{getProductName(item.product)}</span>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-gray-500 text-sm font-medium bg-gray-200/60 px-2 py-0.5 rounded-full">x{item.quantity}</span>
+                    <span className="text-blue-600 text-base font-bold">{formatPrice(item.price * item.quantity)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div className="border-t border-gray-100 pt-3 mt-2 space-y-3">
+          {isEditing ? (
+            <p className="text-base font-bold text-gray-900 bg-yellow-100/50 p-2 rounded-lg text-right shadow-inner border border-yellow-200">
+              {t("cart.total")}: <span className="text-xl text-yellow-700 ml-1">{formatPrice(editItems.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0))}</span> {/* eslint-disable-line @typescript-eslint/no-explicit-any */}
+            </p>
+          ) : (
+            <p className="text-base font-bold text-gray-900 text-right">
+              {t("cart.total")}: <span className="text-xl text-blue-600 ml-1">{formatPrice(order.totalAmount)}</span>
+            </p>
+          )}
+          <p className="text-xs text-gray-400 text-right">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleString()}</p>
+          
+          {isEditing ? (
+            <div className="space-y-3 bg-blue-50/50 p-4 rounded-lg mt-3 border border-blue-100">
+              <h4 className="text-sm font-bold text-blue-800">联系信息 (Contact Info)</h4>
+              <div>
+                <input 
+                  type="tel" 
+                  value={editPhone} 
+                  onChange={e => setEditPhone(e.target.value)} 
+                  className="w-full text-sm px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-white shadow-sm" 
+                  placeholder={t("order.phone")}
+                />
+              </div>
+              <div>
+                <textarea 
+                  value={editAddress} 
+                  onChange={e => setEditAddress(e.target.value)} 
+                  className="w-full text-sm px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-white shadow-sm resize-none" 
+                  rows={2} 
+                  placeholder={t("order.address")}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleSave} disabled={editItems.length === 0 || isUpdating} className="flex-1 bg-blue-600 text-white text-sm font-bold py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:shadow-none active:scale-[0.98]">
+                  {isUpdating ? "保存中..." : "保存更改 / Save"}
+                </button>
+                <button onClick={handleCancelEdit} className="flex-1 bg-white text-gray-700 border border-gray-300 text-sm font-bold py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition-colors active:scale-[0.98]">
+                  取消 / Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50/80 p-3 rounded-lg text-sm text-gray-700 border border-gray-100 space-y-1">
+              <p className="flex items-start gap-2"><span className="font-semibold text-gray-500 flex-shrink-0 w-16">{t("order.phone")}:</span> <span className="font-bold text-gray-900">{order.phone}</span></p>
+              <p className="flex items-start gap-2"><span className="font-semibold text-gray-500 flex-shrink-0 w-16">{t("order.address")}:</span> <span className="text-gray-800 break-words">{order.address}</span></p>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="sm:text-right w-full sm:w-auto flex flex-col justify-start items-end sm:pl-4 border-t sm:border-t-0 sm:border-l border-gray-100 pt-4 sm:pt-0">
+        <span className={`px-4 py-1.5 rounded-full text-xs font-bold inline-flex items-center justify-center shadow-sm uppercase tracking-wide w-full sm:w-auto ${
+          order.status === "PENDING" ? "bg-yellow-100 text-yellow-800 border border-yellow-200" :
+          order.status === "COMPLETED" ? "bg-green-100 text-green-800 border border-green-200" :
+          order.status.startsWith("CANCELLED") ? "bg-red-100 text-red-800 border border-red-200" :
+          "bg-blue-100 text-blue-800 border border-blue-200"
+        }`}>
+          {t(order.status.startsWith("CANCELLED") ? "order.status.CANCELLED" : `order.status.${order.status}`)}
+        </span>
+        
+        {order.status === "PENDING" && !isEditing && (
+          <div className="flex sm:flex-col gap-2 mt-4 w-full">
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="flex-1 sm:w-full text-xs text-blue-700 bg-blue-50 border border-blue-200 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 transition-colors shadow-sm active:scale-[0.98]"
+            >
+              编辑信息 / Edit Info
+            </button>
+            <button 
+              onClick={() => onCancel(order.id)}
+              disabled={isUpdating}
+              className="flex-1 sm:w-full text-xs text-red-600 bg-white border border-red-200 px-4 py-2.5 rounded-lg font-bold hover:bg-red-50 transition-colors shadow-sm disabled:opacity-50 active:scale-[0.98]"
+            >
+              {isUpdating ? "..." : t("account.cancelOrder")}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AccountPage() {
   const { data: session, status } = useSession();
   const [orders, setOrders] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -21,11 +215,22 @@ export default function AccountPage() {
     }
   }, [status, router]);
 
+  const [allProducts, setAllProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editAddress, setEditAddress] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editItems, setEditItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [isUpdating, setIsUpdating] = useState(false);
+
   useEffect(() => {
     if (session?.user) {
       fetch("/api/orders", { cache: "no-store" })
         .then((res) => res.json())
         .then((data) => setOrders(data));
+      fetch("/api/products", { cache: "no-store" })
+        .then((res) => res.json())
+        .then(setAllProducts);
     }
   }, [session]);
 
@@ -56,48 +261,6 @@ export default function AccountPage() {
     }
   };
 
-  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
-  const [editAddress, setEditAddress] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [editItems, setEditItems] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [allProducts, setAllProducts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  useEffect(() => {
-    fetch("/api/products", { cache: "no-store" })
-      .then(res => res.json())
-      .then(setAllProducts);
-  }, []);
-
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  const handleUpdateOrder = async (orderId: string) => {
-    setIsUpdating(true);
-    try {
-      const totalAmount = editItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          address: editAddress, 
-          phone: editPhone,
-          items: editItems,
-          totalAmount 
-        }),
-      });
-      if (res.ok) {
-        const updatedOrder = await res.json();
-        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
-        setEditingOrderId(null);
-      } else {
-        alert("Failed to update");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const handleCancelOrder = async (orderId: string) => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
     setIsUpdating(true);
@@ -112,6 +275,34 @@ export default function AccountPage() {
         setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       } else {
         alert("Failed to cancel order");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUpdateOrder = async (orderId: string, address: string, phone: string, items: any[]) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    setIsUpdating(true);
+    try {
+      const totalAmount = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          address, 
+          phone,
+          items,
+          totalAmount 
+        }),
+      });
+      if (res.ok) {
+        const updatedOrder = await res.json();
+        setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+        setEditingOrderId(null);
+      } else {
+        alert("Failed to update");
       }
     } catch (err) {
       console.error(err);
@@ -184,21 +375,25 @@ export default function AccountPage() {
               <div key={order.id} className="bg-white rounded-lg shadow-sm border p-4 flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="flex-1">
                     {editingOrderId === order.id ? (
-                      <div className="space-y-2 mb-3">
+                      <div className="space-y-2 mb-3 bg-yellow-50/50 p-3 rounded-lg border border-yellow-200">
+                        <h3 className="text-sm font-bold text-yellow-800 mb-2 flex items-center gap-2">
+                          <span className="bg-yellow-400 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">🛒</span>
+                          修改购物车 (Edit Cart)
+                        </h3>
                         {editItems.map((eItem: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                          <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-yellow-50 p-2 rounded border border-yellow-100">
-                            <div className="flex items-center gap-2">
-                              {eItem.product.imageUrl ? (
-                                <Image src={eItem.product.imageUrl} alt="img" width={32} height={32} className="object-cover rounded border" />
+                          <div key={idx} className="flex justify-between items-center text-sm gap-2 bg-white p-2 rounded shadow-sm border border-yellow-100">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {eItem.product?.imageUrl ? (
+                                <Image src={eItem.product.imageUrl} alt="img" width={40} height={40} className="object-cover rounded border flex-shrink-0" />
                               ) : (
-                                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500">No Img</div>
+                                <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 flex-shrink-0">No Img</div>
                               )}
-                              <div className="flex flex-col">
-                                <span className="truncate w-32 font-bold">{getProductName(eItem.product)}</span>
-                                <span className="text-xs text-gray-500">{formatPrice(eItem.price)}</span>
+                              <div className="flex flex-col min-w-0">
+                                <span className="truncate w-32 font-bold leading-tight text-gray-800">{getProductName(eItem.product)}</span>
+                                <span className="text-xs text-blue-600 font-semibold">{formatPrice(eItem.price)}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 bg-gray-50 rounded-full border px-1 py-1 flex-shrink-0">
                               <button onClick={() => {
                                 const newItems = [...editItems];
                                 if (newItems[idx].quantity > 1) {
@@ -208,40 +403,42 @@ export default function AccountPage() {
                                   newItems.splice(idx, 1);
                                   setEditItems(newItems);
                                 }
-                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">-</button>
-                              <span className="w-6 text-center">{eItem.quantity}</span>
+                              }} className="w-6 h-6 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-gray-100 text-gray-700 font-bold transition-transform active:scale-95">-</button>
+                              <span className="w-6 text-center font-bold text-gray-800">{eItem.quantity}</span>
                               <button onClick={() => {
                                 const newItems = [...editItems];
                                 newItems[idx].quantity += 1;
                                 setEditItems(newItems);
-                              }} className="bg-gray-200 px-2 rounded hover:bg-gray-300">+</button>
+                              }} className="w-6 h-6 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-gray-100 text-gray-700 font-bold transition-transform active:scale-95">+</button>
                             </div>
                           </div>
                         ))}
-                        <select 
-                          className="w-full text-xs p-2 border rounded"
-                          onChange={(e) => {
-                            if (!e.target.value) return;
-                            const prod = allProducts.find(p => p.id === e.target.value);
-                            if (prod) {
-                              const existingIdx = editItems.findIndex(i => i.productId === prod.id);
-                              if (existingIdx >= 0) {
-                                const newItems = [...editItems];
-                                newItems[existingIdx].quantity += 1;
-                                setEditItems(newItems);
-                              } else {
-                                setEditItems([...editItems, { productId: prod.id, quantity: 1, price: prod.price, product: prod }]);
+                        <div className="pt-2">
+                          <select 
+                            className="w-full text-sm p-2.5 border border-yellow-300 rounded-lg bg-white shadow-sm focus:ring-yellow-500 focus:border-yellow-500 font-medium text-gray-700 outline-none"
+                            onChange={(e) => {
+                              if (!e.target.value) return;
+                              const prod = allProducts.find(p => p.id === e.target.value);
+                              if (prod) {
+                                const existingIdx = editItems.findIndex(i => i.productId === prod.id);
+                                if (existingIdx >= 0) {
+                                  const newItems = [...editItems];
+                                  newItems[existingIdx].quantity += 1;
+                                  setEditItems(newItems);
+                                } else {
+                                  setEditItems([...editItems, { productId: prod.id, quantity: 1, price: prod.price, product: prod }]);
+                                }
                               }
-                            }
-                            e.target.value = "";
-                          }}
-                          defaultValue=""
-                        >
-                          <option value="" disabled>+ 添加其他商品 (Add Item)</option>
-                          {allProducts.map(p => (
-                            <option key={p.id} value={p.id} disabled={p.stock <= 0}>{getProductName(p)}</option>
-                          ))}
-                        </select>
+                              e.target.value = "";
+                            }}
+                            defaultValue=""
+                          >
+                            <option value="" disabled>+ 添加其他商品 (Add Item)</option>
+                            {allProducts.map(p => (
+                              <option key={p.id} value={p.id} disabled={p.stock <= 0}>{getProductName(p)}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     ) : (
                       <div className="space-y-3 mb-3">
@@ -265,37 +462,44 @@ export default function AccountPage() {
                     )}
                   <div className="border-t pt-2 mt-2 space-y-2">
                     {editingOrderId === order.id ? (
-                      <p className="text-sm font-semibold text-gray-800">{t("cart.total")}: {formatPrice(editItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}</p>
+                      <p className="text-sm font-semibold text-gray-900 bg-yellow-100/50 p-2 rounded-lg text-right shadow-inner border border-yellow-200">
+                        {t("cart.total")}: <span className="text-xl text-yellow-700 ml-1">{formatPrice(editItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}</span>
+                      </p>
                     ) : (
-                      <p className="text-sm font-semibold text-gray-800">{t("cart.total")}: {formatPrice(order.totalAmount)}</p>
+                      <p className="text-sm font-semibold text-gray-800 text-right">
+                        {t("cart.total")}: <span className="text-xl text-blue-600 ml-1">{formatPrice(order.totalAmount)}</span>
+                      </p>
                     )}
-                    <p className="text-xs text-gray-500">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 text-right">{t("account.orderedAt")}: {new Date(order.createdAt).toLocaleString()}</p>
                     
                     {editingOrderId === order.id ? (
-                      <div className="space-y-2 bg-gray-50 p-2 rounded mt-2">
+                      <div className="space-y-3 bg-blue-50/50 p-4 rounded-lg mt-3 border border-blue-100">
+                        <h4 className="text-sm font-bold text-blue-800">联系信息 (Contact Info)</h4>
                         <input 
                           type="tel" 
                           value={editPhone} 
                           onChange={e => setEditPhone(e.target.value)} 
-                          className="w-full text-sm px-2 py-1 border rounded" 
+                          className="w-full text-sm px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-white shadow-sm" 
                           placeholder={t("order.phone")}
                         />
                         <textarea 
                           value={editAddress} 
                           onChange={e => setEditAddress(e.target.value)} 
-                          className="w-full text-sm px-2 py-1 border rounded" 
+                          className="w-full text-sm px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-white shadow-sm resize-none" 
                           rows={2} 
                           placeholder={t("order.address")}
                         />
-                        <div className="flex gap-2">
-                          <button onClick={() => handleUpdateOrder(order.id)} disabled={editItems.length === 0 || isUpdating} className="bg-blue-600 text-white text-xs px-3 py-1 rounded disabled:opacity-50">
-                            {isUpdating ? "保存中..." : "保存 / Save"}
+                        <div className="flex gap-3 pt-2">
+                          <button onClick={() => handleUpdateOrder(order.id)} disabled={editItems.length === 0 || isUpdating} className="flex-1 bg-blue-600 text-white text-sm font-bold py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:shadow-none active:scale-[0.98]">
+                            {isUpdating ? "保存中..." : "保存更改 / Save"}
                           </button>
-                          <button onClick={() => setEditingOrderId(null)} className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded">取消 / Cancel</button>
+                          <button onClick={() => setEditingOrderId(null)} className="flex-1 bg-white text-gray-700 border border-gray-300 text-sm font-bold py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition-colors active:scale-[0.98]">
+                            取消 / Cancel
+                          </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-gray-50 p-2 rounded text-sm text-gray-700">
+                      <div className="bg-gray-50 p-2 rounded text-sm text-gray-700 space-y-1">
                         <p><strong>{t("order.phone")}:</strong> {order.phone}</p>
                         <p><strong>{t("order.address")}:</strong> {order.address}</p>
                       </div>
